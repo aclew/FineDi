@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='flaskr',
-    packages=['flaskr'],
+    name='fineDi',
+    packages=['fineDi'],
     include_package_data=True,
     install_requires=[
         'flask',
