@@ -23,8 +23,8 @@ app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 @app.route('/')
 def show_entries():
     #entries = cur.fetchall()
-    entries="categories"
-    print('hello')
+    entries="bel"
+    print('hem')
     return render_template('show_entries.html', entries=entries)
 
 def connect_db():
