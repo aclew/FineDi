@@ -1,1 +1,1 @@
-from .flaskr import app
+from .diarization_refinement import app
