@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div class="categories">
+      <ul class=entries>
+          <li><a href="{{ url_for('treat_all_wavs', wav_name = wav) }}">Treat All The Wav Files</a></li>
+      </ul>
+  </div>
+
+{% endblock %}

@@ -34,7 +34,11 @@ def index():
                                 - which transcription to use ? gold ? Diartk ?
                             - upload one wav + transcription
     """
-    return "hello world"
+    wav_list = get_wav_list()
+    wav = wav_list[0]
+
+    return render_template('index.html', wav=wav)
+
 
 @app.route('/all_wavs/<wav_name>', methods=['GET', 'POST'])
 def treat_all_wavs(wav_name='test1.wav'):
