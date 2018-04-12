@@ -44,12 +44,12 @@
 	  </div>
 
       <button type="PLAY" onclick="play()" align="center"><img src="{{ url_for('static', filename='images/playbutton.png') }}" width="100%" /></button>
-      <audio id="audio" src="{{ url_for('static', filename='audio/test.wav') }}"></audio>
+      <audio id="audio" src="{{ url_for('static', filename='audio/' + wav) }}"></audio>
 
       <!--<div class="current-file">-->
           <table align="right">
             <tr>
-              <th>File.wav{{ url_for('static', filename=wav) }}</th>
+              <th>{{ wav }}{{ url_for('static', filename='audio/' + wav) }}</th>
             </tr>
             <tr>
               <th>Length</th> 
@@ -69,9 +69,9 @@
       <ul class=entries>
           <form method="post">
           {% for entry in entries %}
-          <li><input id="checkBox" name="trs_label" type="checkbox" value="{{ entry.title() }}"><label for="checkbox-1">{{ entry.title() }}</label>
+          <li><input id="checkBox" name="trs_label" type="checkbox" value="{{ entry.title() }}"><label for="checkbox-1">{{ entry.title() }}</label></li>
           {% endfor %}
-          <input type="submit">
+          <li><input type="submit"></li>
           </form>
       </ul>
   </div>
