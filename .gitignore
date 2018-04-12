@@ -3,3 +3,4 @@
 *egg-info*
 *.pyc
 flaskr/static/audio/*
+*.wav

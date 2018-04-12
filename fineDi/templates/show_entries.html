@@ -75,5 +75,15 @@
           </form>
       </ul>
   </div>
+  <div class="naviguate">
+  {% if prev_wav %}
+      <a href="{{ url_for('treat_all_wavs', wav_name = prev_wav) }}"><img class="arrow" align="center" src="{{ url_for('static', filename='images/prev.png') }}" width="10%" /></a>
+  {% endif %}
+
+  {% if next_wav %}
+      <a href="{{ url_for('treat_all_wavs', wav_name = next_wav) }}"><img class="arrow" align="center"src="{{ url_for('static', filename='images/next.png') }}" width="10%" /></a>
+  {% endif %}
+  </div>
+
 
 {% endblock %}

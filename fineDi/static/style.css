@@ -17,12 +17,6 @@ h2              { font-size: 1.2em; }
                   border: 1px solid #aacbe2; }
 .error          { background: #f0d6d6; padding: 0.5em; }
 
-.categories{
-    border: 1px solid black;
-    padding: 25px;
-    margin: 25px;
-
-}
-.progress-bar{
-   width: 4em;
-}
+.categories     { border: 1px solid black; padding: 25px; margin: 25px; }
+.progress-bar   { width: 4em; }
+.arrow      { display: inline-block; margin:auto; }
