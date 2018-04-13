@@ -19,12 +19,14 @@
      border:none;
      background-color:transparent;
      outline:none;
-     width:  7em;
-     height: 7em;
+     width:  8em;
+     height: 8em;
+     margin-left:2em;
  }
  table {
     font-family: arial, sans-serif;
     /*border-collapse: collapse;*/
+    margin-right: 2em;
     /*width: 40%;*/
  }
 
@@ -37,32 +39,34 @@
 </style>
 	  <div class="container">
 	    <div class="progress" style="width:30em">
-	      <div class="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width:30%" >
+            <div class="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width:{{ progress }}%" >
 	        <span class="sr-only" style="width:5em">70% Complete</span>
 	      </div>
 	    </div>
 	  </div>
 
       <button type="PLAY" onclick="play()" align="center"><img src="{{ url_for('static', filename='images/playbutton.png') }}" width="100%" /></button>
-      <audio id="audio" src="{{ url_for('static', filename='audio/' + wav) }}"></audio>
+      <audio id="audio" src="{{ url_for('static', filename='media/' + wav) }}"></audio>
 
       <!--<div class="current-file">-->
           <table align="right">
             <tr>
-              <th>{{ wav }}</th>
+                <th>{{ descriptors[0] }}</th>
             </tr>
             <tr>
-              <th>Length</th> 
+                <th>{{ descriptors[1] }}</th> 
             </tr>
             <tr>
               <th>Chi</th>
             </tr>
             <tr>
-	          <th>laugh</th>
+                <th>{{ descriptors[2] }}</th>
             </tr>
             <tr>
-              <th>on/off</th>
+                <th>{{ descriptors[3] }}</th>
             </tr>
+            <tr>
+              <th>lock?</th>
           </table>
           <!--</div>-->
   <div class="categories">

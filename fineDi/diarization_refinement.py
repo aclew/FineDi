@@ -5,22 +5,18 @@ import os
 import sqlite3
 from flask import (Flask, request, session, g, redirect, url_for, abort,
                    render_template, flash)
-
+from collections import defaultdict
+import ipdb
 # create app
-print __name__
 app = Flask(__name__) # create the application instance :)
 app.config.from_object(__name__) # load config from this file , flaskr.py
 # Load default config and override config from an environment variable
 app.config.update(dict(
         SECRET_KEY='development key',
         USERNAME='admin',
-        PASSWORD='default'
+        PASSWORD='default',
+        MEDIA_ROOT='static/media'
         ))
-
-#all_wavs=['test1.wav', 'test2.wav']
-#cur_wav= -1
-#print cur_wav
-#app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 @app.route('/')
 def index():
@@ -34,10 +30,53 @@ def index():
                                 - which transcription to use ? gold ? Diartk ?
                             - upload one wav + transcription
     """
-    wav_list = get_wav_list()
-    wav = wav_list[0]
+    wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
+    output = create_segments()
+    print output 
 
-    return render_template('index.html', wav=wav)
+    return render_template('index.html', wav=output)
+
+#@app.route('/creating')
+def create_segments():
+    """ Take each wav, retrieve all the annotated segments,
+        cut the wav into the segments corresponding to 'CHI'
+        and check the labels.
+        The names of the outputed wavs are :
+            in_wav_on_off_spkr_lab.wav
+        where in_wav is the input wav that is segmented, on is
+        the time when the segment starts, off the time when the
+        segment ends, spkr is the name of the speaker and label
+        is the annotation associated with this speaker
+
+    """
+    # first get all the wavs
+    wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
+    
+    # for each wav, retrieve the labels
+    for wav_name in wav_list[0:1]:
+        wav_rttm_dict = read_rttm(wav_name)
+        for on, dur, lab in wav_rttm_dict['CHI']:
+            wav_path = os.path.join(app.root_path, 'static',
+                                    'audio', wav_name)
+            # skip empty segments
+            if dur <= 0:
+                continue
+            # define output wav path
+            output_wav = wav_name.split('.')[0] + '_{}_{}_{}.wav'.format(on,
+                                                                         dur,
+                                                                         lab)
+            output_path = os.path.join(app.root_path,
+                                       app.config['MEDIA_ROOT'],
+                                       output_wav)
+        
+            # create output wave name
+            cmd=['sox', wav_path, output_path, 'trim', str(on), str(dur)]
+            print " ".join(cmd)
+
+    # Now that the wave have been created, go to the treatement phase
+    #print output_path
+    #treat_all_wavs(output_path)
+    return output_wav
 
 
 @app.route('/all_wavs/<wav_name>', methods=['GET', 'POST'])
@@ -51,43 +90,106 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         TODO: add what kind of transcription you want to treat.
     """
-    #entries = cur.fetchall()
-    wav_list = get_wav_list()
     
+    # if no wav is given as input, take the first one that's not locked
+    # in the media folder.
+    print wav_name
+    wav_name = "test3_234.0_1.0_1.wav"
+    wav_list = get_wav_list(os.path.join(app.root_path,
+                                         app.config['MEDIA_ROOT']))
+    print wav_list
+    print os.path.join(app.root_path, app.config['MEDIA_ROOT'])
     # try to get the position of current wav in list
-    try:
-        wav_index = wav_list.index(wav_name)
-        print wav_list
-        print wav_index
-        # get previous wav
-        if wav_index > 0:
-            prev_wav = wav_list[wav_index - 1]
-        else:
-            prev_wav = None
-        
-        # get next wav
-        if wav_index < len(wav_list) - 1:
-            next_wav = wav_list[wav_index + 1]
-        else:
-            next_wav = None
-    except:
-        # if the current wav is not in list, throw error page
-        pass # TODO create error page
+    #try:
+    wav_index = wav_list.index(wav_name)
+    
+    
+    # get previous wav
+    if wav_index > 0:
+        prev_wav = wav_list[wav_index - 1]
+    else:
+        prev_wav = None
+    
+    # get next wav
+    if wav_index < len(wav_list) - 1:
+        next_wav = wav_list[wav_index + 1]
+    else:
+        next_wav = None
+
+    # get percentage of treated files for progress bar
+    progress = round(( (float(wav_index) + 1) / len(wav_list) ) * 100)
+    #except:
+    #    print "except!" 
+    #    # if the current wav is not in list, throw error page
+    #    pass # TODO create error page
 
     # labels that can be put to the segment
     entries=[" laugh", " cry", " speech", " do not change annotation"]
     
-    #wav = "audio/" + wav_name
-    #wav = os.path.join(app.instance_path, 'static', 'audio', wav_name)
-    print(request.form.getlist('trs_label'))
-    return render_template('show_entries.html', entries=entries, wav=wav_name,
-                           next_wav=next_wav, prev_wav=prev_wav)
+    # apply changes to RTTM and put lock to notify the use this file has been
+    # treated
+    correction = request.form.getlist('trs_label')
+    change_rttm(wav_name, correction)
+    
+    # extract description from wav name
+    original_wav = "_".join(wav_name.split('_')[0:-3]) + ".wav"
+    wav_len = float(wav_name.split('_')[-2]) - float(wav_name.split('_')[-3])
+    label = wav_name.split('.')[0].split('_')[-1]
+    on_off = wav_name.split('_')[-3:-1]
+    descriptors = [original_wav, wav_len, label,on_off]
+    # modify RTTM for changes
+    return render_template('show_entries.html', entries=entries, 
+                           wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
+                           progress=progress, descriptors=descriptors)
 
 
-def get_wav_list():
+def get_wav_list(folder):
     """ Get all the wav files in the static folder
         and return them as a list.
         Useful when routine used is to treat all the wavs.
     """
-    print app.root_path
-    return os.listdir(os.path.join(app.root_path, 'static', 'audio'))
+    all_files = os.listdir(folder)
+    return [wav for wav in all_files if wav.endswith('.wav')]
+
+#def read_rttm(wav_name):
+#    """ read the transcription associated to <wav_name>
+#        and create a dict that returns the list of intervals and the
+#        label associated with this interval for each speaker in the corpus.
+#    """
+#
+#    rttm = wav_name.split('.')[0] + '.rttm'
+#    trs = defaultdict(list)
+#
+#    # read the rttm and create dict {spkr -> segments w/ label }
+#    with open(rttm, 'r') as fin:
+#        annot = fin.readlines()
+#        trs = dict()
+#        for line in annot:
+#            _, spkr, _, on, dur, _, _, label, _ = line.strip('\n').split('\t')
+#            trs[spkr].append((float(on), float(on) + float(dur),
+#                              label))
+#    return trs
+
+def read_rttm(wav_name):
+    """ read the transcription associated to <wav_name>
+        and create a dict that returns the list of intervals and the
+        label associated with this interval for each speaker in the corpus.
+    """
+
+    rttm = wav_name.split('.')[0] + '.rttm'
+    trs = defaultdict(list)
+
+    # read the rttm and create dict {spkr -> segments w/ label }
+    with open(os.path.join(app.root_path, 'static', 'audio', rttm), 'r') as fin:
+        annot = fin.readlines()
+        for line in annot:
+            _, fname, _, on, dur, _, _, spkr, label = line.strip('\n').split('\t')
+            trs[spkr].append((float(on), float(dur),
+                              label))
+    return trs
+
+def change_rttm(wav_name, correction):
+    """ take the list of correction that the user made on the labels
+    and change the lines in the RTTM files.
+    """
+
