@@ -6,7 +6,10 @@ import sqlite3
 from flask import (Flask, request, session, g, redirect, url_for, abort,
                    render_template, flash)
 from collections import defaultdict
-import ipdb
+import subprocess
+from tempfile import mkstemp
+from os import remove
+from shutil import move
 # create app
 app = Flask(__name__) # create the application instance :)
 app.config.from_object(__name__) # load config from this file , flaskr.py
@@ -32,7 +35,6 @@ def index():
     """
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
     output = create_segments()
-    print output 
 
     return render_template('index.html', wav=output)
 
@@ -71,12 +73,13 @@ def create_segments():
         
             # create output wave name
             cmd=['sox', wav_path, output_path, 'trim', str(on), str(dur)]
-            print " ".join(cmd)
+            subprocess.call(cmd)
 
-    # Now that the wave have been created, go to the treatement phase
-    #print output_path
-    #treat_all_wavs(output_path)
-    return output_wav
+    # return first wav of the list to start manual annotation
+    temp_wav_list = get_wav_list(os.path.join(app.root_path,
+                                 app.config['MEDIA_ROOT']))
+ 
+    return temp_wav_list[0] 
 
 
 @app.route('/all_wavs/<wav_name>', methods=['GET', 'POST'])
@@ -90,15 +93,12 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         TODO: add what kind of transcription you want to treat.
     """
-    
+ 
     # if no wav is given as input, take the first one that's not locked
     # in the media folder.
     print wav_name
-    wav_name = "test3_234.0_1.0_1.wav"
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
-    print wav_list
-    print os.path.join(app.root_path, app.config['MEDIA_ROOT'])
     # try to get the position of current wav in list
     #try:
     wav_index = wav_list.index(wav_name)
@@ -124,20 +124,32 @@ def treat_all_wavs(wav_name='test1.wav'):
     #    pass # TODO create error page
 
     # labels that can be put to the segment
-    entries=[" laugh", " cry", " speech", " do not change annotation"]
-    
+    entries=["laugh", "cry", "speech", "do not change annotation"]
+     
     # apply changes to RTTM and put lock to notify the use this file has been
     # treated
     correction = request.form.getlist('trs_label')
+    if "Do Not Change Annotation" in correction:
+        correction = []
+
     change_rttm(wav_name, correction)
     
     # extract description from wav name
     original_wav = "_".join(wav_name.split('_')[0:-3]) + ".wav"
-    wav_len = float(wav_name.split('_')[-2]) - float(wav_name.split('_')[-3])
-    label = wav_name.split('.')[0].split('_')[-1]
-    on_off = wav_name.split('_')[-3:-1]
-    descriptors = [original_wav, wav_len, label,on_off]
-    # modify RTTM for changes
+    print wav_name.split('_')[-2]
+    print wav_name.split('_')[-3]
+    wav_len = float(wav_name.split('_')[-2]) 
+    label = wav_name.split('_')[-1].split('.')[0]
+    on_off = wav_name.split('_')[-3]
+    descriptors = [original_wav, wav_len, label, on_off]
+
+    # if some corrections have been made,  change the rttm
+    if len(correction) > 0:
+        rttm_name = original_wav.split('.')[0] + '.rttm'
+        rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
+
+        modify_rttm(rttm_in, descriptors, correction)
+
     return render_template('show_entries.html', entries=entries, 
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
                            progress=progress, descriptors=descriptors)
@@ -150,6 +162,30 @@ def get_wav_list(folder):
     """
     all_files = os.listdir(folder)
     return [wav for wav in all_files if wav.endswith('.wav')]
+
+def modify_rttm(rttm_in, descriptors, correction):
+
+    #Create temp file
+    fh, abs_path = mkstemp()
+    print descriptors
+    with open(abs_path,'w') as new_file:
+        with open(rttm_in) as old_file:
+            for line in old_file:
+                _1, fname, _2, on, dur, _3, _4, spkr, label = line.strip('\n').split('\t')
+                if  ((fname == descriptors[0]) and
+                     (float(on) == float(descriptors[3])) and
+                     (spkr == "CHI")):
+                    print correction
+                    line = '\t'.join([_1, fname, _2, on, dur,
+                                      _3, _4, spkr,
+                                      ','.join(correction)]) + '\n'
+                
+                new_file.write(line)
+
+    #Remove original file
+    remove(rttm_in)
+    #Move new file
+    move(abs_path, rttm_in)
 
 #def read_rttm(wav_name):
 #    """ read the transcription associated to <wav_name>
