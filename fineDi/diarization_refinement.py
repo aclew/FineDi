@@ -46,13 +46,19 @@ def continue():
     """
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
+    # remove .wav from wav names
+    wav_list = [wav[:-4] for wav in wav_list]
+
     locks = os.listdir(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT'])
     # remove first dot and .lock, to match names with wav
     locks = [fin[1:-5] for fin in locks if fin.endswith('lock')]
 
-    first_wav = []
-    return redirect(url_for('treat_all_wavs'))
+    # check matching files in both lists
+    untreated = [wav for wav in wav_list if not wav in locks]
+    first_wav = untreated[0]
+
+    return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
 #@app.route('/creating')
 def create_segments():
@@ -69,7 +75,7 @@ def create_segments():
     """
     # first get all the wavs
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
-    
+
     # for each wav, retrieve the labels
     for wav_name in wav_list[0:1]:
         wav_rttm_dict = read_rttm(wav_name)
