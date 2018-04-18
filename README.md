@@ -15,3 +15,6 @@ The GUI is based on the Flask Python web app.
 [ ] allow user to choose which field they want to treat (label or speaker)
 [ ] put lock on treated files to avoid treating the same file twice
 [ ] go to next page when validating the form
+[ ] Give info on current files in data/
+[ ] Allow user to see the segments in each files and select only one segment to treat
+[ ] Allow user to select one on wav file to treat

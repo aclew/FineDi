@@ -42,27 +42,27 @@ def index():
 
     return render_template('index.html', wav=output)
 
-def continue():
+@app.route('/continue')
+def pick_up():
     """ If the user chose to continue, we look at the .lock files
     to check which files were already treated
     """
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
-    # remove .wav from wav names
-    wav_list = [wav[:-4] for wav in wav_list]
-
+    
     locks = os.listdir(os.path.join(app.root_path,
-                                         app.config['MEDIA_ROOT'])
+                                         app.config['MEDIA_ROOT']))
     # remove first dot and .lock, to match names with wav
     locks = [fin[1:-5] for fin in locks if fin.endswith('lock')]
 
     # check matching files in both lists
     untreated = [wav for wav in wav_list if not wav in locks]
-    first_wav = untreated[0]
+
+    first_wav = untreated[0] 
 
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
-#@app.route('/creating')
+@app.route('/creating')
 def create_segments():
     """ Take each wav, retrieve all the annotated segments,
         cut the wav into the segments corresponding to 'CHI'
@@ -75,6 +75,7 @@ def create_segments():
         is the annotation associated with this speaker
 
     """
+    # start by removing all the wavs in the media folder
     # first get all the wavs
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
 
@@ -102,8 +103,10 @@ def create_segments():
     # return first wav of the list to start manual annotation
     temp_wav_list = get_wav_list(os.path.join(app.root_path,
                                  app.config['MEDIA_ROOT']))
- 
-    return temp_wav_list[0] 
+     
+    first_wav = temp_wav_list[0] 
+    return redirect(url_for('treat_all_wavs', wav_name=first_wav))
+
 
 
 @app.route('/all_wavs/<wav_name>', methods=['GET', 'POST'])
@@ -178,4 +181,7 @@ def treat_all_wavs(wav_name='test1.wav'):
                            progress=progress, descriptors=descriptors)
 
 
-
+@app.route('/success')
+def success():
+    """ Go to this page after all the files are treated"""
+    return render_template('success.html')
