@@ -19,4 +19,5 @@ h2              { font-size: 1.2em; }
 
 .categories     { border: 1px solid black; padding: 25px; margin: 25px; }
 .progress-bar   { width: 4em; }
-.arrow      { display: inline-block; margin:auto; }
+.arrow-left     { display: inline-block; margin-left: 10em; margin-right: auto;}
+.arrow-right    { display: inline-block; margin-right: 10em; margin-left: auto; }

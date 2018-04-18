@@ -10,6 +10,8 @@ import subprocess
 from tempfile import mkstemp
 from os import remove
 from shutil import move
+
+from utils import *
 # create app
 app = Flask(__name__) # create the application instance :)
 app.config.from_object(__name__) # load config from this file , flaskr.py
@@ -132,100 +134,26 @@ def treat_all_wavs(wav_name='test1.wav'):
     if "Do Not Change Annotation" in correction:
         correction = []
 
-    change_rttm(wav_name, correction)
-    
     # extract description from wav name
-    original_wav = "_".join(wav_name.split('_')[0:-3]) + ".wav"
-    print wav_name.split('_')[-2]
-    print wav_name.split('_')[-3]
+    original_wav = "_".join(wav_name.split('_')[0:-3]) 
     wav_len = float(wav_name.split('_')[-2]) 
-    label = wav_name.split('_')[-1].split('.')[0]
+    #label = wav_name.split('_')[-1].split('.')[0]
     on_off = wav_name.split('_')[-3]
+    label = get_label(original_wav, on_off, 'CHI')
+
     descriptors = [original_wav, wav_len, label, on_off]
 
     # if some corrections have been made,  change the rttm
     if len(correction) > 0:
-        rttm_name = original_wav.split('.')[0] + '.rttm'
+        rttm_name = original_wav + '.rttm'
         rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
 
         modify_rttm(rttm_in, descriptors, correction)
+        lock_file(wav_name)
 
     return render_template('show_entries.html', entries=entries, 
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
                            progress=progress, descriptors=descriptors)
 
 
-def get_wav_list(folder):
-    """ Get all the wav files in the static folder
-        and return them as a list.
-        Useful when routine used is to treat all the wavs.
-    """
-    all_files = os.listdir(folder)
-    return [wav for wav in all_files if wav.endswith('.wav')]
-
-def modify_rttm(rttm_in, descriptors, correction):
-
-    #Create temp file
-    fh, abs_path = mkstemp()
-    print descriptors
-    with open(abs_path,'w') as new_file:
-        with open(rttm_in) as old_file:
-            for line in old_file:
-                _1, fname, _2, on, dur, _3, _4, spkr, label = line.strip('\n').split('\t')
-                if  ((fname == descriptors[0]) and
-                     (float(on) == float(descriptors[3])) and
-                     (spkr == "CHI")):
-                    print correction
-                    line = '\t'.join([_1, fname, _2, on, dur,
-                                      _3, _4, spkr,
-                                      ','.join(correction)]) + '\n'
-                
-                new_file.write(line)
-
-    #Remove original file
-    remove(rttm_in)
-    #Move new file
-    move(abs_path, rttm_in)
-
-#def read_rttm(wav_name):
-#    """ read the transcription associated to <wav_name>
-#        and create a dict that returns the list of intervals and the
-#        label associated with this interval for each speaker in the corpus.
-#    """
-#
-#    rttm = wav_name.split('.')[0] + '.rttm'
-#    trs = defaultdict(list)
-#
-#    # read the rttm and create dict {spkr -> segments w/ label }
-#    with open(rttm, 'r') as fin:
-#        annot = fin.readlines()
-#        trs = dict()
-#        for line in annot:
-#            _, spkr, _, on, dur, _, _, label, _ = line.strip('\n').split('\t')
-#            trs[spkr].append((float(on), float(on) + float(dur),
-#                              label))
-#    return trs
-
-def read_rttm(wav_name):
-    """ read the transcription associated to <wav_name>
-        and create a dict that returns the list of intervals and the
-        label associated with this interval for each speaker in the corpus.
-    """
-
-    rttm = wav_name.split('.')[0] + '.rttm'
-    trs = defaultdict(list)
-
-    # read the rttm and create dict {spkr -> segments w/ label }
-    with open(os.path.join(app.root_path, 'static', 'audio', rttm), 'r') as fin:
-        annot = fin.readlines()
-        for line in annot:
-            _, fname, _, on, dur, _, _, spkr, label = line.strip('\n').split('\t')
-            trs[spkr].append((float(on), float(dur),
-                              label))
-    return trs
-
-def change_rttm(wav_name, correction):
-    """ take the list of correction that the user made on the labels
-    and change the lines in the RTTM files.
-    """
 
