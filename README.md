@@ -9,3 +9,9 @@ The user has to go over each segment, can listen to the segment, and change the 
 This routine can be quite long, so the user can stop at any time and pick up where they left off
 
 The GUI is based on the Flask Python web app.
+
+## TODOS
+[ ] ask user f they want to continue where they left off, or treat all the files
+[ ] allow user to choose which field they want to treat (label or speaker)
+[ ] put lock on treated files to avoid treating the same file twice
+[ ] go to next page when validating the form
