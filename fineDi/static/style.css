@@ -16,8 +16,8 @@ h2              { font-size: 1.2em; }
 .flash          { background: #cee5F5; padding: 0.5em;
                   border: 1px solid #aacbe2; }
 .error          { background: #f0d6d6; padding: 0.5em; }
-
+.wav_descript   { margin: 1em auto; overflow:hidden}
 .categories     { border: 1px solid black; padding: 25px; margin: 25px; }
 .progress-bar   { width: 4em; }
-.arrow-left     { display: inline-block; margin-left: 10em; margin-right: auto;}
+.arrow-left     { display: inline-block; margin-left: 13em; margin-right: auto;}
 .arrow-right    { display: inline-block; margin-right: 10em; margin-left: auto; }

@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div class="categories">
+      <h3> An error was encountered, the wav or segment you are trying to access doesn't exist. </h3>
+      <h3> You can go back to the <a href="{{ url_for('index') }}">index</a> and try again from scratch. </h3>
+  </div>
+
+{% endblock %}

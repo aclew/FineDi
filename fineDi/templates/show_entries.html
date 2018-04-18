@@ -21,7 +21,8 @@
      outline:none;
      width:  8em;
      height: 8em;
-     margin-left:2em;
+     margin-left: 2em;
+     position: relative;
  }
  table {
     font-family: arial, sans-serif;
@@ -32,43 +33,43 @@
 
  td, th {
     border: 1px solid #dddddd;
-    /*text-align: left;
+    text-align: right;
     padding: 8px;*/
 }
 
 </style>
-	  <div class="container">
-	    <div class="progress" style="width:30em">
+	  <div class="wav_descript">
+	    <div class="progress" >
             <div class="progress-bar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width:{{ progress }}%" >
 	        <span class="sr-only" style="width:5em">70% Complete</span>
 	      </div>
 	    </div>
 	  </div>
-
-      <button type="PLAY" onclick="play()" align="center"><img src="{{ url_for('static', filename='images/playbutton.png') }}" width="100%" /></button>
+      <div class="wav_descript">
+      <button type="PLAY" onclick="play()" align="left" ><img src="{{ url_for('static', filename='images/playbutton.png') }}" width="100%" /></button>
       <audio id="audio" src="{{ url_for('static', filename='media/' + wav) }}"></audio>
 
       <!--<div class="current-file">-->
           <table align="right">
             <tr>
-                <th>{{ descriptors[0] }}</th>
+                <th>File Name:  {{ descriptors[0] }}</th>
             </tr>
             <tr>
-                <th>{{ descriptors[1] }}</th> 
+                <th>Segment Onset:  {{ descriptors[3] }}</th>
             </tr>
             <tr>
-              <th>Chi</th>
+                <th>Segment Duration:  {{ descriptors[1] }}</th> 
             </tr>
             <tr>
-                <th>{{ descriptors[2] }}</th>
+              <th>Speaker Name: Chi</th>
             </tr>
             <tr>
-                <th>{{ descriptors[3] }}</th>
+                <th>Current Label:  {{ descriptors[2] }}</th>
             </tr>
             <tr>
-              <th>lock?</th>
+                <th>Already Seen:  {{ lock }}</th>
           </table>
-          <!--</div>-->
+      </div>
   <div class="categories">
       <ul class=entries>
           <form method="post">

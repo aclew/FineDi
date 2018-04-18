@@ -49,7 +49,7 @@ def pick_up():
     """
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
-    
+
     locks = os.listdir(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
     # remove first dot and .lock, to match names with wav
@@ -58,7 +58,7 @@ def pick_up():
     # check matching files in both lists
     untreated = [wav for wav in wav_list if not wav in locks]
 
-    first_wav = untreated[0] 
+    first_wav = untreated[0]
 
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
@@ -95,7 +95,7 @@ def create_segments():
             output_path = os.path.join(app.root_path,
                                        app.config['MEDIA_ROOT'],
                                        output_wav)
-        
+
             # create output wave name
             cmd=['sox', wav_path, output_path, 'trim', str(on), str(dur)]
             subprocess.call(cmd)
@@ -103,8 +103,8 @@ def create_segments():
     # return first wav of the list to start manual annotation
     temp_wav_list = get_wav_list(os.path.join(app.root_path,
                                  app.config['MEDIA_ROOT']))
-     
-    first_wav = temp_wav_list[0] 
+
+    first_wav = temp_wav_list[0]
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
 
@@ -120,54 +120,66 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         TODO: add what kind of transcription you want to treat.
     """
- 
+
     # if no wav is given as input, take the first one that's not locked
     # in the media folder.
     print wav_name
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
+
     # try to get the position of current wav in list
-    #try:
-    wav_index = wav_list.index(wav_name)
-    
-    
-    # get previous wav
-    if wav_index > 0:
-        prev_wav = wav_list[wav_index - 1]
-    else:
-        prev_wav = None
-    
-    # get next wav
-    if wav_index < len(wav_list) - 1:
-        next_wav = wav_list[wav_index + 1]
-    else:
-        next_wav = None
+    try:
+        wav_index = wav_list.index(wav_name)
+
+        # get previous wav
+        if wav_index > 0:
+            prev_wav = wav_list[wav_index - 1]
+        else:
+            prev_wav = None
+
+        # get next wav
+        if wav_index < len(wav_list) - 1:
+            next_wav = wav_list[wav_index + 1]
+        else:
+            next_wav = None
+
+
+    except:
+        # if wav doesn't exist, go to error page
+        return redirect(url_for('error_page'))
 
     # get percentage of treated files for progress bar
     progress = round(( (float(wav_index) + 1) / len(wav_list) ) * 100)
-    #except:
-    #    print "except!" 
-    #    # if the current wav is not in list, throw error page
-    #    pass # TODO create error page
 
     # labels that can be put to the segment
     entries=["laugh", "cry", "speech", "do not change annotation"]
-     
+
     # apply changes to RTTM and put lock to notify the use this file has been
     # treated
     correction = request.form.getlist('trs_label')
     if "Do Not Change Annotation" in correction:
         correction = []
+        lock_file(wav_name)
 
     # extract description from wav name
-    original_wav = "_".join(wav_name.split('_')[0:-3]) 
-    wav_len = float(wav_name.split('_')[-2]) 
+    original_wav = "_".join(wav_name.split('_')[0:-3])
+    wav_len = float(wav_name.split('_')[-2])
     #label = wav_name.split('_')[-1].split('.')[0]
     on_off = wav_name.split('_')[-3]
     label = get_label(original_wav, on_off, 'CHI')
 
     descriptors = [original_wav, wav_len, label, on_off]
 
+    # Check if file has already been seen
+    locks = os.listdir(os.path.join(app.root_path,
+                                         app.config['MEDIA_ROOT']))
+
+    # remove first dot and .lock, to match names with wav
+    locks = [fin[1:-5] for fin in locks if fin.endswith('lock')]
+    if wav_name in locks:
+        lock = "yes"
+    else:
+        lock = "no"
     # if some corrections have been made,  change the rttm
     if len(correction) > 0:
         rttm_name = original_wav + '.rttm'
@@ -176,12 +188,16 @@ def treat_all_wavs(wav_name='test1.wav'):
         modify_rttm(rttm_in, descriptors, correction)
         lock_file(wav_name)
 
-    return render_template('show_entries.html', entries=entries, 
+    return render_template('show_entries.html', entries=entries,
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
-                           progress=progress, descriptors=descriptors)
+                           progress=progress, descriptors=descriptors, lock=lock)
 
 
 @app.route('/success')
 def success():
     """ Go to this page after all the files are treated"""
     return render_template('success.html')
+
+@app.route('/error')
+def error_page():
+    return render_template('error_page.html')
