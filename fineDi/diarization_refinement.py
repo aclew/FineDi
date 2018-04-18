@@ -34,9 +34,25 @@ def index():
                             - upload one wav + transcription
     """
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
+    # ##TODO Ask user if they want to continue where they stopped,
+    # or treat all the files in the folder.
     output = create_segments()
 
     return render_template('index.html', wav=output)
+
+def continue():
+    """ If the user chose to continue, we look at the .lock files
+    to check which files were already treated
+    """
+    wav_list = get_wav_list(os.path.join(app.root_path,
+                                         app.config['MEDIA_ROOT']))
+    locks = os.listdir(os.path.join(app.root_path,
+                                         app.config['MEDIA_ROOT'])
+    # remove first dot and .lock, to match names with wav
+    locks = [fin[1:-5] for fin in locks if fin.endswith('lock')]
+
+    first_wav = []
+    return redirect(url_for('treat_all_wavs'))
 
 #@app.route('/creating')
 def create_segments():
