@@ -32,7 +32,7 @@ def get_label(wav_name, cur_on, cur_spkr):
     with open(rttm, 'r') as fin:
         annot = fin.readlines()
         for line in annot:
-            _1, fname, _2, on, dur, _3, _4, spkr, label = line.strip('\n').split('\t')
+            _1, fname, _2, on, dur, _3, label, spkr, _4 = line.strip('\n').split('\t')
             if ( (fname == wav_name) and
                  (float(on) == float(cur_on)) and
                  (spkr == cur_spkr)):
@@ -50,13 +50,13 @@ def modify_rttm(rttm_in, descriptors, correction):
     with open(abs_path,'w') as new_file:
         with open(rttm_in) as old_file:
             for line in old_file:
-                _1, fname, _2, on, dur, _3, _4, spkr, label = line.strip('\n').split('\t')
+                _1, fname, _2, on, dur, _3, label, spkr, _4 = line.strip('\n').split('\t')
                 if  ((fname == descriptors[0]) and
                      (float(on) == float(descriptors[3])) and
                      (spkr == "CHI")):
                     line = '\t'.join([_1, fname, _2, on, dur,
-                                      _3, _4, spkr,
-                                      ','.join(correction)]) + '\n'
+                                      _3, ','.join(correction), spkr,
+                                      _4 + '\n'
                 
                 new_file.write(line)
 
