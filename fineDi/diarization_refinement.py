@@ -1,6 +1,34 @@
 #!/usr/bin/env python
 #
 # all the imports
+
+"""
+FineDi is an app, based on Flask (a web app developpement toolkit for python)
+created to refine manually the results of a labelisation.
+
+The current script creates the app (locally) and implements the different pages
+that are accessible by the user, as well as the functionnalities associated 
+with these pages.
+
+To link a url to a python function with flask, simply add the decorator:
+    @app.route('your/url')
+
+and to tell the python function to display a page: 
+    return render_template('template.html')
+
+The implemented pages here are: 
+    - index: the user can select between different routines
+    - treat_all_wavs: the user can manipulate the label of the wav file
+    - success: page displayed when all the segments have been treated
+    - error: page displayed when an error is encountered
+    - create_segments: gather the segments that will be labelled
+    - pick_up: allow the user to restart where they stopped at the previous 
+      session
+"""
+
+__version__ = "1.0.0"
+
+# imports
 import os
 import sqlite3
 from flask import (Flask, request, session, g, redirect, url_for, abort,
@@ -12,6 +40,8 @@ from os import remove
 from shutil import move
 
 from utils import *
+
+
 # create app
 app = Flask(__name__) # create the application instance :)
 app.config.from_object(__name__) # load config from this file , flaskr.py
@@ -23,6 +53,7 @@ app.config.update(dict(
         MEDIA_ROOT='static/media'
         ))
 
+# accessible urls
 @app.route('/')
 def index():
     """ TODO DEFINE
@@ -157,9 +188,6 @@ def treat_all_wavs(wav_name='test1.wav'):
     # apply changes to RTTM and put lock to notify the use this file has been
     # treated
     correction = request.form.getlist('trs_label')
-    if "Do Not Change Annotation" in correction:
-        correction = []
-        lock_file(wav_name)
 
     # extract description from wav name
     original_wav = "_".join(wav_name.split('_')[0:-3])
@@ -180,13 +208,28 @@ def treat_all_wavs(wav_name='test1.wav'):
         lock = "yes"
     else:
         lock = "no"
-    # if some corrections have been made,  change the rttm
+
+    # if some corrections have been made,  change the rttm and go to next page
+    if "Do Not Change Annotation" in correction:
+        correction = []
+        lock_file(wav_name)
+        if next_wav:
+            return redirect(url_for('treat_all_wavs', wav_name=next_wav))
+        else:
+            return redirect(url_for('success'))
+
     if len(correction) > 0:
         rttm_name = original_wav + '.rttm'
         rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
 
         modify_rttm(rttm_in, descriptors, correction)
         lock_file(wav_name)
+        if next_wav:
+            return redirect(url_for('treat_all_wavs', wav_name=next_wav))
+        else:
+            return redirect(url_for('success'))
+
+
 
     return render_template('show_entries.html', entries=entries,
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,

@@ -56,7 +56,7 @@ def modify_rttm(rttm_in, descriptors, correction):
                      (spkr == "CHI")):
                     line = '\t'.join([_1, fname, _2, on, dur,
                                       _3, ','.join(correction), spkr,
-                                      _4 + '\n'
+                                      _4 + '\n'])
                 
                 new_file.write(line)
 
