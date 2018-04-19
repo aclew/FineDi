@@ -12,7 +12,11 @@ The GUI is based on the Flask Python web app.
 
 Installation
 ------------
-To install the application, a simple:
+First you need to install sox if you don't have it, as it is necessary to run the app. On ubuntu:
+```    sudo apt install sox```
+and on macos:
+```    brew install sox```
+Then, too install the application, a simple:
 ```    pip install --editable .```
 should suffice.
 If some errors are encountered with this command, please open an issue and try the following:
@@ -23,6 +27,8 @@ If some errors are encountered with this command, please open an issue and try t
 
 Usage
 -----
+First you need to place your wav files and the rttm transcriptions (with the same names !) in the `fineDi/static/audio` folder. Please note that the `.rttm` will be modified directly, so if you feel unsure, please make a backup of those files.
+
 To use the app, please do:
 ```    sh launch_app.sh
 ```
