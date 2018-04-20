@@ -26,13 +26,12 @@ The implemented pages here are:
       session
 """
 
-__version__ = "1.0.0"
-
 # imports
 import os
 import sqlite3
 from flask import (Flask, request, session, g, redirect, url_for, abort,
                    render_template, flash)
+import ipdb
 from collections import defaultdict
 import subprocess
 from tempfile import mkstemp
@@ -67,11 +66,42 @@ def index():
                             - upload one wav + transcription
     """
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
-    # ##TODO Ask user if they want to continue where they stopped,
-    # or treat all the files in the folder.
-    output = create_segments()
 
-    return render_template('index.html', wav=output)
+
+    ## labels for tasks
+    talker_lab =  ['CHI', 'OCH', 'FA', 'MA']
+    vocal_mat_lab = ['cry', 'laugh', 'non-canonical babbling',
+                     'canonical babbling', 'undecided', 'wrong']
+
+    # define global variables
+    flask.g.task2col = {'talker labels': 8, 'vocal maturity': 7}
+    flask.g.task2choices = {'talker labels': talker_lab,
+                            'vocal maturity': vocal_mat_lab}
+
+    return render_template('index.html')
+
+@app.route('/choice')
+def task_choice():
+    """ Ask the user if they want to change the labels for the 'CHI' speaker,
+        or if they want to check the speaker labels
+    """
+
+    return render_template('choose_column.html')
+
+@app.route('/task_chosen', methods=['POST', 'GET'])
+def task_chosen():
+    """ Get the input from the form to choose a task
+    """
+    # get task to column dict
+    task2col = flask.g.get('task2col')
+    task2choices = flask.g.get('task2choices')
+    # get input from form
+    task = request.form.getlist('task')
+    flask.g.column = task2col[task]
+
+    # now set the choices
+    flask.g.choices = task2choices[task]
+
 
 @app.route('/continue')
 def pick_up():
@@ -142,12 +172,15 @@ def create_segments():
 
 @app.route('/all_wavs/<wav_name>', methods=['GET', 'POST'])
 def treat_all_wavs(wav_name='test1.wav'):
-    """ This function creates the app
-        when the user is treating all the wavs. 
+    """ This function displays a interactive page, where the user
+        can listen to the segment and choose some labels. 
         It gets the current wav but also the previous and the next.
         This page can be accessed in the browser by going directly 
         to localhost/all_wavs/<wav_name> , where wav_name is
         the name of the wav you want to treat. 
+        When the form with the labels is submitted, this function 
+        changes the corresponding line in the RTTM and redirects the 
+        user to the next segment.
 
         TODO: add what kind of transcription you want to treat.
     """
