@@ -17,7 +17,7 @@ sleep 1
 flask_pid=`ps | grep flask | awk '{print $1}'`
 
 # open app in firefox
-firefox 127.0.0.1:5000& || kill
+firefox 127.0.0.1:5000& 
 # wait again for firefox to launch
 sleep 5
 

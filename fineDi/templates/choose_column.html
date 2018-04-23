@@ -2,9 +2,10 @@
 {% block body %}
   <div class="categories">
       <h3> Please select the field you want to edit during this session: </h3>
-      <form action = "http://127.0.0.1:5000/task_chosen">
+      <form method="post">
           <input type="radio" name="task" value="label" checked><p>Label</p>
           <input type="radio" name="task" value="speaker"><p>Speaker</p>
+          <input type="submit">
       </form>
   </div>
 

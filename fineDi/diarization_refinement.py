@@ -39,7 +39,8 @@ from os import remove
 from shutil import move
 
 from utils import *
-
+# import global variables
+from task import *
 
 # create app
 app = Flask(__name__) # create the application instance :)
@@ -69,39 +70,32 @@ def index():
 
 
     ## labels for tasks
-    talker_lab =  ['CHI', 'OCH', 'FA', 'MA']
-    vocal_mat_lab = ['cry', 'laugh', 'non-canonical babbling',
-                     'canonical babbling', 'undecided', 'wrong']
+    #talker_lab =  ['CHI', 'OCH', 'FA', 'MA']
+    #vocal_mat_lab = ['cry', 'laugh', 'non-canonical babbling',
+    #                 'canonical babbling', 'undecided', 'wrong']
 
     # define global variables
-    flask.g.task2col = {'talker labels': 8, 'vocal maturity': 7}
-    flask.g.task2choices = {'talker labels': talker_lab,
-                            'vocal maturity': vocal_mat_lab}
+    #flask.g.task2col = {'talker labels': 7, 'vocal maturity': 6}
+    #flask.g.task2choices = {'talker labels': talker_lab,
+    #                        'vocal maturity': vocal_mat_lab}
 
     return render_template('index.html')
 
-@app.route('/choice')
+@app.route('/choice', methods=['POST', 'GET'])
 def task_choice():
     """ Ask the user if they want to change the labels for the 'CHI' speaker,
         or if they want to check the speaker labels
     """
+    if request.method == 'POST':
+        print "postpostpostpostpostpostpostpo"
+        task = request.form.getlist('task')[0]
+        print task
+        print type(task)
+        write_task(task)
+        return redirect(url_for('create_segments'))
+
 
     return render_template('choose_column.html')
-
-@app.route('/task_chosen', methods=['POST', 'GET'])
-def task_chosen():
-    """ Get the input from the form to choose a task
-    """
-    # get task to column dict
-    task2col = flask.g.get('task2col')
-    task2choices = flask.g.get('task2choices')
-    # get input from form
-    task = request.form.getlist('task')
-    flask.g.column = task2col[task]
-
-    # now set the choices
-    flask.g.choices = task2choices[task]
-
 
 @app.route('/continue')
 def pick_up():
@@ -184,10 +178,12 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         TODO: add what kind of transcription you want to treat.
     """
+    #task = flask.g.get('task')
+    task = read_task()
 
+    for key in task2choices:
     # if no wav is given as input, take the first one that's not locked
     # in the media folder.
-    print wav_name
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
 
@@ -216,7 +212,7 @@ def treat_all_wavs(wav_name='test1.wav'):
     progress = round(( (float(wav_index) + 1) / len(wav_list) ) * 100)
 
     # labels that can be put to the segment
-    entries=["laugh", "cry", "speech", "do not change annotation"]
+    entries = task2choices[task]
 
     # apply changes to RTTM and put lock to notify the use this file has been
     # treated
@@ -266,7 +262,8 @@ def treat_all_wavs(wav_name='test1.wav'):
 
     return render_template('show_entries.html', entries=entries,
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
-                           progress=progress, descriptors=descriptors, lock=lock)
+                           progress=progress, descriptors=descriptors,
+                           lock=lock)
 
 
 @app.route('/success')

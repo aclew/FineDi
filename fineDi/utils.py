@@ -5,6 +5,8 @@ from os import remove
 from shutil import move
 from collections import defaultdict
 from flask import current_app as app
+import flask
+from task import *
 
 def get_wav_list(folder):
     """ Get all the wav files in the static folder
@@ -15,11 +17,11 @@ def get_wav_list(folder):
     return [wav for wav in all_files if wav.endswith('.wav')]
 
 def lock_file(wav_name):
-    """ When a file is treated, write a .<wav_name>.lock file in the media folder
-        to avoid retreating the same files twice
+    """ When a file is treated, write a .<wav_name>.lock file in the media
+        folder to avoid retreating the same files twice
     """
     lock_file = ".{}.lock".format(wav_name)
-    
+
     # create empty lock file ##TODO add date in lock file ?
     open(os.path.join(app.root_path,
                       app.config['MEDIA_ROOT'],
@@ -44,20 +46,41 @@ def modify_rttm(rttm_in, descriptors, correction):
     """ Change only one line in RTTM file, using the labels
         entered by the user
     """
+    # get which column should be changed
+    task = read_task()
+    col_to_change = task2col[task]
+
+    # create dict to store input and output columns of RTTM files
+    in_col = dict()
+    out_col = dict()
 
     #Create temp file
     fh, abs_path = mkstemp()
     with open(abs_path,'w') as new_file:
         with open(rttm_in) as old_file:
             for line in old_file:
-                _1, fname, _2, on, dur, _3, label, spkr, _4 = line.strip('\n').split('\t')
-                if  ((fname == descriptors[0]) and
-                     (float(on) == float(descriptors[3])) and
-                     (spkr == "CHI")):
-                    line = '\t'.join([_1, fname, _2, on, dur,
-                                      _3, ','.join(correction), spkr,
-                                      _4 + '\n'])
-                
+                (in_col[0], in_col[1], in_col[2],
+                 in_col[3], in_col[4], in_col[5],
+                 in_col[6], in_col[7], in_col[8]) = line.strip('\n').split('\t')
+
+                if  ((in_col[1] == descriptors[0]) and
+                     (float(in_col[3]) == float(descriptors[3])) and
+                     (in_col[7] == "CHI")):
+                    # write correction in correct column
+                    for key in in_col:
+                        if key == col_to_change:
+                            out_col[key] = ','.join(correction)
+                        else:
+                            out_col[key] = in_col[key]
+                    #line = '\t'.join([_1, fname, _2, on, dur,
+                    #                  _3, ','.join(correction), spkr,
+                    #                  _4 + '\n'])
+                    line = '\t'.join([out_col[0], out_col[1], out_col[2],
+                                      out_col[3], out_col[4], out_col[5],
+                                      out_col[6], out_col[7],
+                                      out_col[8] + '\n'])
+
+
                 new_file.write(line)
 
     #Remove original file
@@ -102,4 +125,22 @@ def read_rttm(wav_name):
                               label))
     return trs
 
+def write_task(task):
+    """
+        Write a task.txt file containing only the name of the task
+        in the Media folder, so that when the usercontinues the task,
+        the session knows what task it is.
+    """
+    with open(os.path.join(app.root_path, app.config['MEDIA_ROOT'], "task.txt"), 'w') as fout:
+        fout.write(u'{}'.format(task))
+    return
+
+def read_task():
+    """
+        Read the task.txt file containing the 
+        current task
+    """
+    with open(os.path.join(app.root_path, app.config['MEDIA_ROOT'], "task.txt"), 'r') as fin:
+        task = fin.read().strip('\n')
+    return task
 
