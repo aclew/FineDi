@@ -194,10 +194,12 @@ def treat_all_wavs(wav_name='test1.wav'):
         (original_wav, wav_len,
          on_off, old_spkr, new_spkr, label) = get_infos_from_wavname_speaker(wav_name)
         display_spkr = new_spkr
+        speaker = True
     else:
         (original_wav, wav_len,
          on_off, label) = get_infos_from_wavname_label(wav_name)
         display_spkr = "CHI"
+        speaker = None
     descriptors = [original_wav, wav_len, display_spkr, label, on_off]
 
     # Check if file has already been seen
@@ -251,7 +253,7 @@ def treat_all_wavs(wav_name='test1.wav'):
     return render_template('show_entries.html', entries=entries,
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
                            progress=progress, descriptors=descriptors,
-                           lock=lock)
+                           lock=lock, speaker=speaker)
 
 
 @app.route('/success')

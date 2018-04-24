@@ -74,9 +74,18 @@
       <ul class=entries>
           <form method="post">
           {% for entry in entries %}
-          <li><input id="checkBox" name="trs_label" type="checkbox" value="{{ entry.title() }}"><label for="checkbox-1">{{ entry.title() }}</label></li>
+              {% if speaker %}
+              {% if entry in descriptors[2] %}
+                      <li><input id="checkBox" name="trs_label" type="radio" value="{{ entry.upper() }}" checked><label for="checkbox-1">{{ entry.upper() }}</label></li>
+
+                  {% else %}
+                      <li><input id="checkBox" name="trs_label" type="radio" value="{{ entry.upper() }}"><label for="checkbox-1">{{ entry.upper() }}</label></li>
+                  {% endif %}
+              {% else %}
+                  <li><input id="checkBox" name="trs_label" type="checkbox" value="{{ entry.title() }}"><label for="checkbox-1">{{ entry.title() }}</label></li>
+              {% endif %}
           {% endfor %}
-          <li><input type="submit" onClick="window.location.reload()"></li>
+              <li><input type="submit" onClick="window.location.reload()"></li>
           </form>
       </ul>
   </div>

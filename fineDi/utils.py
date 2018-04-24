@@ -32,18 +32,11 @@ def lock_file(wav_name, spkr_name=None):
 
 def get_label(wav_name, cur_on, cur_spkr):
     """ Get the current label for the wav file being treated"""
-    print wav_name
     rttm = os.path.join(app.root_path, 'static', 'audio', wav_name + '.rttm')
     with open(rttm, 'r') as fin:
         annot = fin.readlines()
         for line in annot:
             _1, fname, _2, on, dur, _3, label, spkr, _4 = line.strip('\n').split('\t')
-            #print "file"
-            #print fname, wav_name
-            #print "onset"
-            #print on, cur_on
-            #print "speaker"
-            #print spkr, cur_spkr
             if ( (fname == wav_name) and
                  (float(on) == float(cur_on)) and
                  (spkr == cur_spkr)):
@@ -67,7 +60,6 @@ def modify_rttm(rttm_in, descriptors, correction):
     fh, abs_path = mkstemp()
     with open(abs_path,'w') as new_file:
         with open(rttm_in) as old_file:
-            print rttm_in
             for line in old_file:
                 (in_col[0], in_col[1], in_col[2],
                  in_col[3], in_col[4], in_col[5],
@@ -78,10 +70,8 @@ def modify_rttm(rttm_in, descriptors, correction):
                     # write correction in correct column
                     for key in in_col:
                         if key == col_to_change:
-                            print "just put {} in col {} of {}".format(','.join(correction), key+1, rttm_in)
                             out_col[key] = ','.join(correction)
                         else:
-                            print "col key {}".format(key)
                             out_col[key] = in_col[key]
                     #line = '\t'.join([_1, fname, _2, on, dur,
                     #                  _3, ','.join(correction), spkr,
