@@ -54,3 +54,4 @@ you can open an issue.
 [ ] Give info on current files in data/
 [ ] Allow user to see the segments in each files and select only one segment to treat
 [ ] Allow user to select one on wav file to treat
+[ ] Modify input form for speaker to allow only one category at a time (radio instead of checkbox)

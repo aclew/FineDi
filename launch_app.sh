@@ -11,7 +11,7 @@ export FLASK_APP=$DIR/fineDi/diarization_refinement.py
 # run app
 flask run&
 # wait a bit for the app to launch
-sleep 1
+sleep 2
 
 # get flask pid
 flask_pid=`ps | grep flask | awk '{print $1}'`
