@@ -47,11 +47,11 @@ you can open an issue.
 
 
 ## TODOS
-[X] ask user f they want to continue where they left off, or treat all the files
-[ ] allow user to choose which field they want to treat (label or speaker)
-[X] put lock on treated files to avoid treating the same file twice
-[X] go to next page when validating the form
-[ ] Give info on current files in data/
-[ ] Allow user to see the segments in each files and select only one segment to treat
-[ ] Allow user to select one on wav file to treat
-[ ] Modify input form for speaker to allow only one category at a time (radio instead of checkbox)
+[X] ask user f they want to continue where they left off, or treat all the files  
+[X] allow user to choose which field they want to treat (label or speaker)  
+[X] put lock on treated files to avoid treating the same file twice  
+[X] go to next page when validating the form  
+[ ] Give info on current files in data/  
+[ ] Allow user to see the segments in each files and select only one segment to treat  
+[ ] Allow user to select one on wav file to treat  
+[X] Modify input form for speaker to allow only one category at a time (radio instead of checkbox)  
