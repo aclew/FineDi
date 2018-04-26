@@ -26,13 +26,12 @@ The implemented pages here are:
       session
 """
 
-__version__ = "1.0.0"
-
 # imports
 import os
 import sqlite3
 from flask import (Flask, request, session, g, redirect, url_for, abort,
                    render_template, flash)
+import ipdb
 from collections import defaultdict
 import subprocess
 from tempfile import mkstemp
@@ -40,7 +39,8 @@ from os import remove
 from shutil import move
 
 from utils import *
-
+# import global variables
+from task import *
 
 # create app
 app = Flask(__name__) # create the application instance :)
@@ -67,11 +67,32 @@ def index():
                             - upload one wav + transcription
     """
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
-    # ##TODO Ask user if they want to continue where they stopped,
-    # or treat all the files in the folder.
-    output = create_segments()
 
-    return render_template('index.html', wav=output)
+
+    ## labels for tasks
+    #talker_lab =  ['CHI', 'OCH', 'FA', 'MA']
+    #vocal_mat_lab = ['cry', 'laugh', 'non-canonical babbling',
+    #                 'canonical babbling', 'undecided', 'wrong']
+
+    # define global variables
+    #flask.g.task2col = {'talker labels': 7, 'vocal maturity': 6}
+    #flask.g.task2choices = {'talker labels': talker_lab,
+    #                        'vocal maturity': vocal_mat_lab}
+
+    return render_template('index.html')
+
+@app.route('/choice', methods=['POST', 'GET'])
+def task_choice():
+    """ Ask the user if they want to change the labels for the 'CHI' speaker,
+        or if they want to check the speaker labels
+    """
+    if request.method == 'POST':
+        task = request.form.getlist('task')[0]
+        write_task(task)
+        return redirect(url_for('create_segments', task=task))
+
+
+    return render_template('choose_column.html')
 
 @app.route('/continue')
 def pick_up():
@@ -93,68 +114,51 @@ def pick_up():
 
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
-@app.route('/creating')
-def create_segments():
-    """ Take each wav, retrieve all the annotated segments,
-        cut the wav into the segments corresponding to 'CHI'
-        and check the labels.
-        The names of the outputed wavs are :
-            in_wav_on_off_spkr_lab.wav
-        where in_wav is the input wav that is segmented, on is
-        the time when the segment starts, off the time when the
-        segment ends, spkr is the name of the speaker and label
-        is the annotation associated with this speaker
-
+@app.route('/creating/<task>')
+def create_segments(task):
     """
-    # start by removing all the wavs in the media folder
-    # first get all the wavs
-    wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
+        Depending on the chosen task, create all the segments that will be 
+        examined by the user
+    """
+    # First remove everything in the media folder
+    for fin in os.listdir(os.path.join(app.root_path,
+                                       app.config['MEDIA_ROOT'])):
+        if fin == "task.txt":
+            continue
+        else:
+            os.remove(os.path.join(app.root_path,
+                                   app.config['MEDIA_ROOT'], fin))
 
-    # for each wav, retrieve the labels
-    for wav_name in wav_list[0:1]:
-        wav_rttm_dict = read_rttm(wav_name)
-        for on, dur, lab in wav_rttm_dict['CHI']:
-            wav_path = os.path.join(app.root_path, 'static',
-                                    'audio', wav_name)
-            # skip empty segments
-            if dur <= 0:
-                continue
-            # define output wav path
-            output_wav = wav_name.split('.')[0] + '_{}_{}_{}.wav'.format(on,
-                                                                         dur,
-                                                                         lab)
-            output_path = os.path.join(app.root_path,
-                                       app.config['MEDIA_ROOT'],
-                                       output_wav)
+    # Create the audio segments
+    if task == "label":
+        first_wav = create_segments_label()
+    else:
+        first_wav = create_segments_speaker()
 
-            # create output wave name
-            cmd=['sox', wav_path, output_path, 'trim', str(on), str(dur)]
-            subprocess.call(cmd)
-
-    # return first wav of the list to start manual annotation
-    temp_wav_list = get_wav_list(os.path.join(app.root_path,
-                                 app.config['MEDIA_ROOT']))
-
-    first_wav = temp_wav_list[0]
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
 
 
 @app.route('/all_wavs/<wav_name>', methods=['GET', 'POST'])
 def treat_all_wavs(wav_name='test1.wav'):
-    """ This function creates the app
-        when the user is treating all the wavs. 
+    """ This function displays a interactive page, where the user
+        can listen to the segment and choose some labels. 
         It gets the current wav but also the previous and the next.
         This page can be accessed in the browser by going directly 
         to localhost/all_wavs/<wav_name> , where wav_name is
         the name of the wav you want to treat. 
+        When the form with the labels is submitted, this function 
+        changes the corresponding line in the RTTM and redirects the 
+        user to the next segment.
 
         TODO: add what kind of transcription you want to treat.
     """
-
+    try:
+        task = read_task()
+    except:
+        pass
     # if no wav is given as input, take the first one that's not locked
     # in the media folder.
-    print wav_name
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
 
@@ -183,20 +187,20 @@ def treat_all_wavs(wav_name='test1.wav'):
     progress = round(( (float(wav_index) + 1) / len(wav_list) ) * 100)
 
     # labels that can be put to the segment
-    entries=["laugh", "cry", "speech", "do not change annotation"]
-
-    # apply changes to RTTM and put lock to notify the use this file has been
-    # treated
-    correction = request.form.getlist('trs_label')
+    entries = task2choices[task]
 
     # extract description from wav name
-    original_wav = "_".join(wav_name.split('_')[0:-3])
-    wav_len = float(wav_name.split('_')[-2])
-    #label = wav_name.split('_')[-1].split('.')[0]
-    on_off = wav_name.split('_')[-3]
-    label = get_label(original_wav, on_off, 'CHI')
-
-    descriptors = [original_wav, wav_len, label, on_off]
+    if task == "speaker":
+        (original_wav, wav_len,
+         on_off, old_spkr, new_spkr, label) = get_infos_from_wavname_speaker(wav_name)
+        display_spkr = new_spkr
+        speaker = True
+    else:
+        (original_wav, wav_len,
+         on_off, label) = get_infos_from_wavname_label(wav_name)
+        display_spkr = "CHI"
+        speaker = None
+    descriptors = [original_wav, wav_len, display_spkr, label, on_off]
 
     # Check if file has already been seen
     locks = os.listdir(os.path.join(app.root_path,
@@ -210,30 +214,46 @@ def treat_all_wavs(wav_name='test1.wav'):
         lock = "no"
 
     # if some corrections have been made,  change the rttm and go to next page
-    if "Do Not Change Annotation" in correction:
-        correction = []
-        lock_file(wav_name)
-        if next_wav:
-            return redirect(url_for('treat_all_wavs', wav_name=next_wav))
+    if request.method == 'POST':
+        # apply changes to RTTM and put lock to notify the use this file has been
+        # treated
+        correction = request.form.getlist('trs_label')
+        if task == "speaker":
+            correction = [spkr.upper() for spkr in correction]
+            cor_spkr = correction[0]
         else:
-            return redirect(url_for('success'))
+            cor_spkr = None
 
-    if len(correction) > 0:
-        rttm_name = original_wav + '.rttm'
-        rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
 
-        modify_rttm(rttm_in, descriptors, correction)
-        lock_file(wav_name)
-        if next_wav:
-            return redirect(url_for('treat_all_wavs', wav_name=next_wav))
-        else:
-            return redirect(url_for('success'))
+        if "Do Not Change Annotation" in correction:
+            correction = []
+            lock_file(wav_name)
+            if next_wav:
+                return redirect(url_for('treat_all_wavs', wav_name=next_wav))
+            else:
+                return redirect(url_for('success'))
+
+        if len(correction) > 0:
+            rttm_name = original_wav + '.rttm'
+            rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
+
+            modify_rttm(rttm_in, descriptors, correction)
+
+            # lock file
+            lock_file(wav_name, cor_spkr)
+
+            # check if current segment is the last, if so, redirect to success page
+            if next_wav:
+                return redirect(url_for('treat_all_wavs', wav_name=next_wav))
+            else:
+                return redirect(url_for('success'))
 
 
 
     return render_template('show_entries.html', entries=entries,
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
-                           progress=progress, descriptors=descriptors, lock=lock)
+                           progress=progress, descriptors=descriptors,
+                           lock=lock, speaker=speaker)
 
 
 @app.route('/success')
