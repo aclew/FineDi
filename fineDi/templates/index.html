@@ -1,9 +1,14 @@
 {% extends "layout.html" %}
 {% block body %}
   <div class="categories">
+      <h3>Annotation Session</h3>
       <ul class=entries>
-          <li><a href="{{ url_for('task_choice') }}">Treat All The Wav Files</a></li>
-          <li><a href="{{ url_for('pick_up') }}">Pick Up Where I Left Off</a></li>
+          <li><a href="{{ url_for('task_choice') }}">Start Session</a></li>
+          <li><a href="{{ url_for('pick_up') }}">Continue Session</a></li>
+      </ul>
+      <h3>Informations</h3>
+      <ul class=entries>
+          <li><a href="{{ url_for('avail_wavs') }}">Show Info on Wavs</a></li>
       </ul>
   </div>
 
