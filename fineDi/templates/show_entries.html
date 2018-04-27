@@ -71,6 +71,9 @@
           </table>
       </div>
   <div class="categories">
+      {% if noChoice %}
+        <p> Please select one of the following </p>
+      {% endif %}
       <ul class=entries>
           <form method="post">
           {% for entry in entries %}

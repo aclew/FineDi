@@ -44,14 +44,9 @@ from task import *
 
 # create app
 app = Flask(__name__) # create the application instance :)
-app.config.from_object(__name__) # load config from this file , flaskr.py
-# Load default config and override config from an environment variable
-app.config.update(dict(
-        SECRET_KEY='development key',
-        USERNAME='admin',
-        PASSWORD='default',
-        MEDIA_ROOT='static/media'
-        ))
+#app.config.from_object(__name__) # load config from this file , flaskr.py
+# Load config from an environment variable
+app.config.from_envvar('FLASK_CONFIG')
 
 # accessible urls
 @app.route('/')
@@ -67,7 +62,7 @@ def index():
                             - upload one wav + transcription
     """
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
-
+    print app.config['TEMP_ROOT']
 
     ## labels for tasks
     #talker_lab =  ['CHI', 'OCH', 'FA', 'MA']
@@ -153,14 +148,15 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         TODO: add what kind of transcription you want to treat.
     """
-    try:
-        task = read_task()
-    except:
-        pass
+    task = read_task()
+
     # if no wav is given as input, take the first one that's not locked
     # in the media folder.
     wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
+
+    # init noChoice to None
+    noChoice = None
 
     # try to get the position of current wav in list
     try:
@@ -218,11 +214,6 @@ def treat_all_wavs(wav_name='test1.wav'):
         # apply changes to RTTM and put lock to notify the use this file has been
         # treated
         correction = request.form.getlist('trs_label')
-        if task == "speaker":
-            correction = [spkr.upper() for spkr in correction]
-            cor_spkr = correction[0]
-        else:
-            cor_spkr = None
 
 
         if "Do Not Change Annotation" in correction:
@@ -234,6 +225,13 @@ def treat_all_wavs(wav_name='test1.wav'):
                 return redirect(url_for('success'))
 
         if len(correction) > 0:
+            # get new speaker name, to put in lock
+            if task == "speaker":
+                correction = [spkr.upper() for spkr in correction]
+                cor_spkr = correction[0]
+            else:
+                cor_spkr = None
+
             rttm_name = original_wav + '.rttm'
             rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
 
@@ -247,13 +245,14 @@ def treat_all_wavs(wav_name='test1.wav'):
                 return redirect(url_for('treat_all_wavs', wav_name=next_wav))
             else:
                 return redirect(url_for('success'))
-
+        else:
+            noChoice = True
 
 
     return render_template('show_entries.html', entries=entries,
                            wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
                            progress=progress, descriptors=descriptors,
-                           lock=lock, speaker=speaker)
+                           lock=lock, speaker=speaker, noChoice=noChoice)
 
 
 @app.route('/success')
@@ -264,3 +263,21 @@ def success():
 @app.route('/error')
 def error_page():
     return render_template('error_page.html')
+
+@app.route('/avail_wavs')
+def avail_wavs():
+    """ show the wavs in the data folder, 
+        and the CHI segments available inside
+    """
+    # get list of wavs
+    wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
+
+    # get info for each wav
+    segment = dict()
+    for wav_name in wav_list[:]:
+        wav_rttm_dict = read_rttm(wav_name)
+        infos = [(key, len(wav_rttm_dict[key])) for key in wav_rttm_dict]
+        segment[wav_name] = infos
+
+    return render_template('available_wavs.html',
+                           wav_list=wav_list, seg=segment)

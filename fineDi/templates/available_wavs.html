@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div class="categories">
+    <ul class="main">
+        {% for wav in wav_list %}
+        <li><a>{{ wav }}</a>
+                <ul style="display: none;">
+                {% for segment in seg[wav] %}
+                <li>Speaker {{ segment[0] }} has {{ segment[1] }} segments</li>
+                {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+  </div>
+  <script>
+  $('ul.main li').click(function() {
+    $(this).children('ul').toggle();
+    });
+  </script>
+{% endblock %}

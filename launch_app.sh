@@ -4,7 +4,9 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $DIR
 
+
 # Export env variable to specify app path
+export FLASK_CONFIG=$DIR/config.py
 export PYTHONPATH=$DIR/fineDi:$PYTHONPATH
 export FLASK_APP=$DIR/fineDi/diarization_refinement.py
 
