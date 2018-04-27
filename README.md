@@ -1,5 +1,5 @@
 # FineDi
-Diarization Refinment Tool
+Diarization Refinement Tool
 ==========================
 
 This tool allows the user to check the diarization for each child segment in the corpus, and add/correct the labels.
