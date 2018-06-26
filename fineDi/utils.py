@@ -6,7 +6,38 @@ from shutil import move
 from collections import defaultdict
 from flask import current_app as app
 import flask
+import random
+import numpy as np
 from task import *
+
+def split_segments_rttm(folder):
+    """ get all the rttm in folder, and for each folder,
+        split each vocalization into small 0.5s long segments
+        and write it into folder, with 'refined' prepended to
+        the rttm name"""
+    all_files = os.listdir(folder)
+    all_rttm = [rttm for rttm in all_files if (rttm.endswith('.rttm') and not rttm.startswith('refined'))]
+    for rttm in all_rttm:
+        with open(os.path.join(folder, rttm), 'r') as fin:
+            with open(os.path.join(folder,
+                               '_'.join(['refined',rttm])), 'w') as fout:
+                rttm_seg = fin.readlines()
+                for line in rttm_seg:
+                    speak, fname, one, on, dur, ortho, lab, spkr, chnl = line.strip('\n').split('\t')
+                    # if dur > 0.5, split line in multiple line of 0.5s length
+                    on = float(on)
+                    dur = float(dur)
+                    if dur > 0.5:
+                        last_onset = on + np.floor(dur/0.5) * 0.5 - 0.5
+                        for onset in np.linspace(on, last_onset, np.floor(dur/0.5)):
+                            fout.write(u'{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(speak, fname, one, onset, 0.5, ortho, lab, spkr, chnl))
+                        if np.floor(dur / 0.5) < dur / 0.5:
+                            last_dur = (on + dur) - (last_onset + 0.5)
+                            fout.write(u'{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(speak, fname, one, last_onset + 0.5, last_dur, ortho, lab, spkr, chnl))
+                    else:
+                        fout.write(u'{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(speak, fname, one, on, dur, ortho, lab, spkr, chnl))
+    return
+
 
 def get_wav_list(folder):
     """ Get all the wav files in the static folder
@@ -15,6 +46,22 @@ def get_wav_list(folder):
     """
     all_files = os.listdir(folder)
     return [wav for wav in all_files if wav.endswith('.wav')]
+
+def write_order(wav_list):
+    """ write the random order of the wavs in a text file"""
+    with open(os.path.join(app.root_path, app.config['MEDIA_ROOT'], "order.txt"), 'w') as fout:
+        for wav_name in wav_list:
+            fout.write(u'{}\n'.format(wav_name))
+    return
+
+def read_order():
+    """ read the random order of the wavs"""
+    with open(os.path.join(app.root_path, app.config['MEDIA_ROOT'], "order.txt"), 'r') as fin:
+        order = fin.readlines()
+        wav_list = []
+        for line in order:
+            wav_list.append(line.strip('\n'))
+    return wav_list
 
 def lock_file(wav_name, spkr_name=None):
     """ When a file is treated, write a .<wav_name>.lock file in the media
@@ -33,6 +80,7 @@ def lock_file(wav_name, spkr_name=None):
 def get_label(wav_name, cur_on, cur_spkr):
     """ Get the current label for the wav file being treated"""
     rttm = os.path.join(app.root_path, 'static', 'audio', wav_name + '.rttm')
+
     with open(rttm, 'r') as fin:
         annot = fin.readlines()
         for line in annot:
@@ -40,7 +88,8 @@ def get_label(wav_name, cur_on, cur_spkr):
             if ( (fname == wav_name) and
                  (float(on) == float(cur_on)) and
                  (spkr == cur_spkr)):
-                out_label = label
+                split_label = label.split(',')
+                out_label = ','.join([lab2vocal_mat[lab] for lab in split_label])
     return out_label
 
 
@@ -48,9 +97,13 @@ def modify_rttm(rttm_in, descriptors, correction):
     """ Change only one line in RTTM file, using the labels
         entered by the user
     """
+    ### Reminder, descriptors is:
+    # [original_wav, wav_len, display_spkr, label, on_off]
     # get which column should be changed
     task = read_task()
     col_to_change = task2col[task]
+    labels = choices2task[task]
+    speakers = talker_lab
 
     # create dict to store input and output columns of RTTM files
     in_col = dict()
@@ -66,7 +119,7 @@ def modify_rttm(rttm_in, descriptors, correction):
                  in_col[6], in_col[7], in_col[8]) = line.strip('\n').split('\t')
                 if  ((in_col[1] == descriptors[0]) and
                      (float(in_col[3]) == float(descriptors[4])) and
-                     (in_col[7] == descriptors[2])):
+                     (in_col[7] == speakers[descriptors[2]])):
                     # write correction in correct column
                     for key in in_col:
                         if key == col_to_change:
@@ -80,7 +133,6 @@ def modify_rttm(rttm_in, descriptors, correction):
                                       out_col[3], out_col[4], out_col[5],
                                       out_col[6], out_col[7],
                                       out_col[8] + '\n'])
-
 
                 new_file.write(line)
 
@@ -160,7 +212,7 @@ def read_rttm(wav_name):
         label associated with this interval for each speaker in the corpus.
     """
 
-    rttm = wav_name.split('.')[0] + '.rttm'
+    rttm = 'refined_' + wav_name.split('.')[0] + '.rttm'
     trs = defaultdict(list)
 
     # read the rttm and create dict {spkr -> segments w/ label }
