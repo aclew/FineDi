@@ -79,12 +79,12 @@ def lock_file(wav_name, spkr_name=None):
 
 def get_label(wav_name, cur_on, cur_spkr):
     """ Get the current label for the wav file being treated"""
-    rttm = os.path.join(app.root_path, 'static', 'audio', wav_name + '.rttm')
-
+    rttm = os.path.join(app.root_path, 'static', 'audio','refined_' + wav_name + '.rttm')
     with open(rttm, 'r') as fin:
         annot = fin.readlines()
         for line in annot:
             _1, fname, _2, on, dur, _3, label, spkr, _4 = line.strip('\n').split('\t')
+
             if ( (fname == wav_name) and
                  (float(on) == float(cur_on)) and
                  (spkr == cur_spkr)):

@@ -121,6 +121,11 @@ def create_segments(task):
         Depending on the chosen task, create all the segments that will be
         examined by the user
     """
+    # Before anything, check if there are files in audio/
+    # if not, go to success page
+    if len(os.listdir(os.path.join(app.root_path, 'static', 'audio'))) == 0:
+        return redirect(url_for('no_wavs'))
+
     # First remove everything in the media folder
     for fin in os.listdir(os.path.join(app.root_path,
                                        app.config['MEDIA_ROOT'])):
@@ -277,6 +282,11 @@ def treat_all_wavs(wav_name='test1.wav'):
 def success():
     """ Go to this page after all the files are treated"""
     return render_template('success.html')
+
+@app.route('/nowavs')
+def no_wavs():
+    """ Go to this page if no wavs were detected"""
+    return render_template('no_wavs.html')
 
 @app.route('/error')
 def error_page():

@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div class="categories">
+      <h3> No wav files were detected in the fineDi/static/audio folder. </h3>
+      <h3> If you put audio files in another format, please convert them to wav, using sox for example.</h3>
+      <h3> You can return to the <a href="{{ url_for('index') }}">index</a> </h3>
+  </div>
+
+{% endblock %}
