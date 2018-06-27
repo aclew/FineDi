@@ -89,8 +89,7 @@ When you treated all the segments, you'll end up on a success page and can go ba
 The speaker task is pretty much the same, but the main differences are that the segments presented are not all from the CHI speaker, and this time you can only choose one label per segment.
 
 ## Closing the App
-After the firefox window is closed, the flask application should be closed by the script. 
-This can be checked by typing in command line:
+After the firefox window is closed, the flask application should be closed by the script. Be aware that if you are using firefox to go on the internet in different tabs, the app won't close completely as it waits for the whole firefox to be closed to stop. If you don't want to quit using your tabs, you can stop the app by pressing `ctrl` and `c` at the same time in the terminal window, and then follow the following instructions to kill the flask process :
 ```    ps```
 if you see a line saying "flask", it means the application failed to stop, and you can stop it by typing 
 ```    kill $flask_pid```
