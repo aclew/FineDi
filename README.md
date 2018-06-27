@@ -12,7 +12,18 @@ The GUI is based on the Flask Python web app.
 
 Installation
 ------------
-First you need to install sox if you don't have it, as it is necessary to run the app. On ubuntu:
+## On Linux
+First open a terminal, and go to the folder (using the *cd* command) in which you want to install this software. 
+Then, clone this repository using:
+```    git clone https://github.com/aclew/FineDi.git```
+If that fails saying that git is not installed, please do 
+```    sudo apt install git```
+then try again the previous command.
+When the cloning is finished, do 
+```    cd FineDi```
+
+
+Then you need to install sox if you don't have it, as it is necessary to run the app. On ubuntu:
 ```    sudo apt install sox```
 and on macos:
 ```    brew install sox```
@@ -25,6 +36,25 @@ If some errors are encountered with this command, please open an issue and try t
        python setup.py build
        python setup.py develop
 ```
+## On windows
+Installation on windows is harder than on linux. One easy solution is to install a [virtual box](https://www.virtualbox.org) with ubuntu, and to follow the installation process for linux.
+
+If you still want to install it on windows you'll need to follow these steps, using windows powershell:
+- install git for windows
+- install python2.7 for windows
+- install sox (SOund eXchange) for windows
+- install firefox (recommended as the app might not show well on internet explorer/microsoft edge)
+- add the sox folder and the python folder to you `path` environment variable ( see [here](https://www.computerhope.com/issues/ch000549.htm) for steps to change an environment variable)
+- in FineDi, install the package using `python -m pip install --editable .` (don't forget the dot)
+- then you have to set three environnment variables to the folders and subfolder of finedi:
+  - FLASK_CONFIG should point to the complete path to config.py
+  - PYTHONPATH should point to the complete path of the fineDi folder
+  - FLASK_APP should point to the complete path to diarization_refinement.py
+- when all of that is done, you can launch the app by typing, using the powershell in the FineDi/ folder, `python -m flask`
+- the previous step launches the app, to access it, open firefox and go to 127.0.0.1:5000
+- to close the app, you should close firefox, then find the flask process and kill it.
+
+Be aware that there is no support for windows, and no guaranty that the app will work correctly on windows.
 
 Usage
 -----
@@ -38,8 +68,7 @@ Please, place the files to treat (wav + rttm) before starting the app, otherwise
 
 ## Starting the App
 To use the app, please do:
-```    sh launch_app.sh
-```
+```    sh launch_app.sh```
 This should launch the flask app and open a firefox window with the index page of the app.
 If you encounter an error when firefox opens, please refresh the page as sometimes the index might fail to load the first time. If after refreshing the page still fails, please copy the command output and open an issue.
 
