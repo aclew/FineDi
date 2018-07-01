@@ -37,7 +37,7 @@ If some errors are encountered with this command, please open an issue and try t
        python setup.py develop
 ```
 ## On windows
-Installation on windows is harder than on linux. One easy solution is to install a [virtual box](https://www.virtualbox.org) with an [ubuntu image](http://releases.ubuntu.com/16.04/) ( find a [tutorial here](https://www.lifewire.com/run-ubuntu-within-windows-virtualbox-2202098 - it is advised to create the VM with a [shared folder] (https://www.techrepublic.com/article/how-to-share-folders-between-guest-and-host-in-virtualbox/)), and to follow the installation process for linux.
+Installation on windows is harder than on linux. One easy solution is to install a [virtual box](https://www.virtualbox.org) with an [ubuntu image](http://releases.ubuntu.com/16.04/) ( find a [tutorial here](https://www.lifewire.com/run-ubuntu-within-windows-virtualbox-2202098) - it is advised to create the VM with a [shared folder](https://www.techrepublic.com/article/how-to-share-folders-between-guest-and-host-in-virtualbox/)), and to follow the installation process for linux.
 
 If you still want to install it on windows you'll need to follow these steps, using windows powershell:
 - install git for windows
