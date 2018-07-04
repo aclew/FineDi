@@ -29,11 +29,11 @@ def split_segments_rttm(folder):
                     dur = float(dur)
                     if dur > 0.5:
                         last_onset = on + np.floor(dur/0.5) * 0.5 - 0.5
-                        for onset in np.linspace(on, last_onset, np.floor(dur/0.5)):
+                        for onset in np.linspace(on, last_onset - 0.5, np.floor(dur/0.5) -1):
                             fout.write(u'{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(speak, fname, one, onset, 0.5, ortho, lab, spkr, chnl))
-                        if np.floor(dur / 0.5) < dur / 0.5:
-                            last_dur = (on + dur) - (last_onset + 0.5)
-                            fout.write(u'{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(speak, fname, one, last_onset + 0.5, last_dur, ortho, lab, spkr, chnl))
+                        last_dur = (on + dur) - last_onset
+                        fout.write(u'{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(speak, fname, one, last_onset , last_dur, ortho, lab, spkr, chnl))
+
                     else:
                         fout.write(u'{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(speak, fname, one, on, dur, ortho, lab, spkr, chnl))
     return
