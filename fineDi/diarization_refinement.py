@@ -64,7 +64,6 @@ def index():
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
     # if not already done, pretreat the input rttm to split each 
     # vocalization in 0.5s length segments
-    split_segments_rttm(os.path.join(app.root_path, 'static', 'audio'))
 
     # write random order in order_file in media/
     print app.config['TEMP_ROOT']
@@ -87,6 +86,7 @@ def task_choice():
         or if they want to check the speaker labels
     """
     if request.method == 'POST':
+        split_segments_rttm(os.path.join(app.root_path, 'static', 'audio'))
         task = request.form.getlist('task')[0]
         write_task(task)
         return redirect(url_for('create_segments', task=task))
