@@ -9,11 +9,14 @@ lab2talker = {'CHI': 'key child',
               'OCH': 'other child',
               'FA': 'female adult',
               'MA': 'male adult'}
+
 vocal_mat_lab = {'crying':"Y", 'laughing':"L", 'non-canonical babbling':"N",
-                 'canonical babbling':"C", 'undecided':"U", 'exclude':"X", "do not change annotation":"NCA"}
+                 'canonical babbling':"C", 'vegetative':'V', 'undecided':"U",
+                 'exclude':"X", "do not change annotation":"NCA"}
 lab2vocal_mat = {"Y":'crying', "L":'laughing',
                  "N":'non-canonical babbling',
                  "C":'canonical babbling',
+                 "V": 'vegetative',
                  "U": 'undecided',"X": 'exclude',
                  "NCA":"do not change annotation",
                  "<NA>": "<NA>"}
