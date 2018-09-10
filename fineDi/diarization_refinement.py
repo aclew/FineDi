@@ -51,8 +51,6 @@ app.config.from_envvar('FLASK_CONFIG')
 
 dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
 media_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/')
-# info_dict = os.listdir(os.path.join(app.root_path,
-                                     # app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt'))
 
 # accessible urls
 @app.route('/')
