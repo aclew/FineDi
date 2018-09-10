@@ -142,7 +142,7 @@ def modify_rttm(rttm_in, descriptors, correction):
     move(abs_path, rttm_in)
 
 
-def get_infos_from_wavname_label(wav_name):
+def get_infos_from_wavname_label(wav_name, rttm=True):
     """
         when the segments are created, some key infos are
         put in the name of the wav file.
@@ -152,7 +152,9 @@ def get_infos_from_wavname_label(wav_name):
     wav_len = float(wav_name.split('_')[-2])
     #label = wav_name.split('_')[-1].split('.')[0]
     on_off = wav_name.split('_')[-3]
-    label = get_label(original_wav, on_off, 'CHI')
+    label = "None"
+    if rttm:
+        label = get_label(original_wav, on_off, 'CHI')
     return original_wav, wav_len, on_off, label
 
 
@@ -169,7 +171,7 @@ def get_infos_from_wavname_speaker(wav_name):
     old_spkr = wav_name.split('_')[-1].split('.')[0]
 
     # To get label, we should check if the file has already been seen.
-    # If so, it means the speaker has changed and we should get the 
+    # If so, it means the speaker has changed and we should get the
     # current speaker
     locks = os.listdir(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
@@ -236,7 +238,7 @@ def write_task(task):
 
 def read_task():
     """
-        Read the task.txt file containing the 
+        Read the task.txt file containing the
         current task
     """
     with open(os.path.join(app.root_path, app.config['MEDIA_ROOT'], "task.txt"), 'r') as fin:

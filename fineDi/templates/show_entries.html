@@ -6,7 +6,7 @@
        if (audio.paused)
        {
          audio.play();
-       } else 
+       } else
        {
          audio.pause();
          audio.currentTime = 0;
@@ -47,7 +47,7 @@
 	  </div>
       <div class="wav_descript">
       <button type="PLAY" onclick="play()" align="left" ><img src="{{ url_for('static', filename='images/playbutton.png') }}" width="100%" /></button>
-      <audio id="audio" src="{{ url_for('static', filename='media/' + wav) }}"></audio>
+      <audio id="audio" src="{{ url_for('static', filename=dir + wav) }}"></audio>
 
       <!--<div class="current-file">-->
           <table align="right">

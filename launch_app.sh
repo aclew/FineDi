@@ -21,21 +21,22 @@ if [ ! -d $DIR/fineDi/static/media ]; then
 fi
 
 # run app
-flask run&
+flask run
+#flask run&
 # wait a bit for the app to launch
-sleep 2
+#sleep 2
 
 # get flask pid
-flask_pid=`ps | grep flask | awk '{print $1}'`
+#flask_pid=`ps | grep flask | awk '{print $1}'`
 
 # open app in firefox
-firefox 127.0.0.1:5000&
+#open /Applications/Firefox.app -g 127.0.0.1:5000&
 # wait again for firefox to launch
-sleep 5
+#sleep 5
 
 # get firefox pid
-firefox_pid=`ps | grep firefox | awk '{print $1}'`
+#firefox_pid=`ps | grep firefox | awk '{print $1}'`
 
 # wait for the firefox window to close and then kill the server that runs flask
-wait $firefox_pid
-kill -15 $flask_pid
+#wait $firefox_pid
+#kill -15 $flask_pid

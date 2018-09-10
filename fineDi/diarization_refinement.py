@@ -31,7 +31,7 @@ import os
 import sqlite3
 from flask import (Flask, request, session, g, redirect, url_for, abort,
                    render_template, flash)
-import ipdb
+# import ipdb
 from collections import defaultdict
 import subprocess
 from tempfile import mkstemp
@@ -41,12 +41,18 @@ import random
 from utils import *
 # import global variables
 from task import *
+import cPickle
 
 # create app
 app = Flask(__name__) # create the application instance :)
 #app.config.from_object(__name__) # load config from this file , flaskr.py
 # Load config from an environment variable
 app.config.from_envvar('FLASK_CONFIG')
+
+dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
+media_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/')
+# info_dict = os.listdir(os.path.join(app.root_path,
+                                     # app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt'))
 
 # accessible urls
 @app.route('/')
@@ -62,7 +68,7 @@ def index():
                             - upload one wav + transcription
     """
     wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
-    # if not already done, pretreat the input rttm to split each 
+    # if not already done, pretreat the input rttm to split each
     # vocalization in 0.5s length segments
 
     # write random order in order_file in media/
@@ -86,9 +92,11 @@ def task_choice():
         or if they want to check the speaker labels
     """
     if request.method == 'POST':
-        split_segments_rttm(os.path.join(app.root_path, 'static', 'audio'))
+
         task = request.form.getlist('task')[0]
         write_task(task)
+        if (task != "wholecut"):
+            split_segments_rttm(os.path.join(app.root_path, 'static', 'audio'))
         return redirect(url_for('create_segments', task=task))
 
 
@@ -104,7 +112,8 @@ def pick_up():
     wav_list = read_order()
 
     locks = os.listdir(os.path.join(app.root_path,
-                                         app.config['MEDIA_ROOT']))
+                                         app.config['MEDIA_ROOT'], 'cutdir/'))
+                                         ## TODO MODIFIED
     # remove first dot and .lock, to match names with wav
     locks = [fin[1:-5] for fin in locks if fin.endswith('lock')]
 
@@ -123,27 +132,51 @@ def create_segments(task):
     """
     # Before anything, check if there are files in audio/
     # if not, go to success page
-    if len(os.listdir(os.path.join(app.root_path, 'static', 'audio'))) == 0:
-        return redirect(url_for('no_wavs'))
+    if (task != "wholecut"):
+        if len(os.listdir(os.path.join(app.root_path, 'static', 'audio'))) == 0:
+            return redirect(url_for('no_wavs'))
 
-    # First remove everything in the media folder
-    for fin in os.listdir(os.path.join(app.root_path,
+            # First remove everything in the media folder
+            for fin in os.listdir(os.path.join(app.root_path,
                                        app.config['MEDIA_ROOT'])):
-        if fin == "task.txt":
-            continue
-        else:
-            os.remove(os.path.join(app.root_path,
+                if fin == "task.txt":
+                    continue
+                else:
+                    os.remove(os.path.join(app.root_path,
                                    app.config['MEDIA_ROOT'], fin))
 
-    # Create the audio segments
-    if task == "label":
-        first_wav = create_segments_label()
-    else:
-        first_wav = create_segments_speaker()
+                # Create the audio segments
+                if task == "label":
+                    first_wav = create_segments_label()
+                else:
+                    first_wav = create_segments_speaker()
 
-    # shuffle media files 
-    wav_list = get_wav_list(os.path.join(app.root_path,
+    # shuffle media files
+        wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
+
+    else:
+        # retrieve already cut wav files
+        wav_list = get_wav_list(media_path) #future temp
+        # wav_list = ['cutdir/'+w for w in wav_list]
+        # TODO
+        # retrieve csv file, create if does not exist
+        try:
+            with open(dict_path,"rb") as reading_file:
+                info_dict = cPickle.load(reading_file)
+        except Exception:
+            info_dict = {}
+            all_files = os.listdir(media_path)
+            for f in all_files:
+                for mode in modes:
+                    # for mat in maturity:
+                    for mat in vocal_mat_lab_cut.keys():
+                        info_dict[(f, mode, mat)] = 0
+            with open(dict_path, "wb") as writing_file:
+                cPickle.dump(info_dict, writing_file)
+        # cut wav between 500/whole
+        # based on csv, randomly select [k] 500 chunks and/or [k] whole chunks (?)
+        # join to create wav_list
 
     seed = 50
     random.Random(seed).shuffle(wav_list)
@@ -212,11 +245,17 @@ def treat_all_wavs(wav_name='test1.wav'):
          on_off, old_spkr, new_spkr, label) = get_infos_from_wavname_speaker(wav_name)
         display_spkr = labels[new_spkr]
         speaker = True
-    else:
+    elif task == "label":
         (original_wav, wav_len,
          on_off, label) = get_infos_from_wavname_label(wav_name)
         display_spkr = "key child"
         speaker = None
+    else:
+        (original_wav, wav_len,
+        on_off, label) = get_infos_from_wavname_label(wav_name, False)
+        display_spkr = "key child"
+        speaker = None
+
     descriptors = [original_wav, wav_len, display_spkr, label, on_off]
 
     # Check if file has already been seen
@@ -254,14 +293,22 @@ def treat_all_wavs(wav_name='test1.wav'):
                 cor_spkr = correction[0]
             else:
                 cor_spkr = None
+            if (task!="wholecut"):
+                rttm_name = "refined_" + original_wav + '.rttm'
+                rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
 
-            rttm_name = "refined_" + original_wav + '.rttm'
-            rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
+                modify_rttm(rttm_in, descriptors, correction)
 
-            modify_rttm(rttm_in, descriptors, correction)
-
-            # lock file
-            lock_file(wav_name, cor_spkr)
+                # lock file
+                lock_file(wav_name, cor_spkr)
+            else:
+                print(correction)
+                with open(dict_path, 'rb') as reading_file:
+                    info_dict = cPickle.load(reading_file)
+                info_dict[(wav_name, 'cut', choices2task["wholecut"][correction[0]])] += 1
+                with open(dict_path, "wb") as writing_file:
+                    cPickle.dump(info_dict, writing_file)
+                pass
 
             # check if current segment is the last, if so, redirect to success page
             if next_wav:
@@ -270,10 +317,14 @@ def treat_all_wavs(wav_name='test1.wav'):
                 return redirect(url_for('success'))
         else:
             noChoice = True
-
-
+    print(task)
+    if (task=='label' or task=='speaker'):
+        directory = 'media/'
+    else:
+        directory = 'media/cutdir/'
+    print(wav_name)
     return render_template('show_entries.html', entries=entries.keys(),
-                           wav=wav_name, next_wav=next_wav, prev_wav=prev_wav,
+                           wav=wav_name, dir=directory, next_wav=next_wav, prev_wav=prev_wav,
                            progress=progress, descriptors=descriptors,
                            lock=lock, speaker=speaker, noChoice=noChoice)
 
