@@ -9,6 +9,8 @@ import flask
 import random
 import numpy as np
 from task import *
+import cPickle
+import os
 
 def split_segments_rttm(folder):
     """ get all the rttm in folder, and for each folder,
@@ -335,3 +337,32 @@ def create_segments_label():
 
     first_wav = temp_wav_list[0]
     return first_wav
+
+def get_wav_index(wav_name):
+    # considering the name of the file is sth like child_age_onset_offset
+    res = '_'.join(wav_name.split('.')[0].split('_')[0:4])
+    return res
+
+def create_info_txt(media_path, dict_path):
+    info_dict = {}
+    all_files = [f for f in os.listdir(media_path) if f.endswith(".wav")]
+    for f in all_files:
+        for mode in modes:
+            for mat in vocal_mat_lab_cut.keys():
+                info_dict[(get_wav_index(f), mode, mat)] = 0
+        info_dict[(get_wav_index(f), 'whole', 'is_child')] = 0
+    with open(dict_path, "wb") as writing_file:
+        cPickle.dump(info_dict, writing_file)
+    return info_dict
+
+def create_summary_txt(media_path, summary_path):
+    sum_dict = {}
+    files_500 = [f for f in os.listdir(media_path+'/cutdir/500/') if (f.endswith(".wav"))]
+    files_checked = [f for f in os.listdir(media_path+'/cutdir/whole_checked/') if (f.endswith(".wav"))]
+    for f in files_500:
+        sum_dict[f] = 0
+    for f in files_checked:
+        sum_dict[f] = 0
+    with open(summary_path, "wb") as writing_file:
+        cPickle.dump(sum_dict, writing_file)
+    return sum_dict

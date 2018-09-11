@@ -49,12 +49,20 @@ app = Flask(__name__) # create the application instance :)
 # Load config from an environment variable
 app.config.from_envvar('FLASK_CONFIG')
 
-dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
-media_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/')
+# global dict_path
+# dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
+# global media_path
+# media_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'])
+# global step
+# step=0
+# global max_steps
+# max_steps=10
 
 # accessible urls
 @app.route('/')
 def index():
+
+
     """ TODO DEFINE
         Let the user choose what routine (s)he wants to use
         to refine the diarization.
@@ -93,7 +101,7 @@ def task_choice():
 
         task = request.form.getlist('task')[0]
         write_task(task)
-        if (task != "wholecut"):
+        if ("wholecut" not in task):
             split_segments_rttm(os.path.join(app.root_path, 'static', 'audio'))
         return redirect(url_for('create_segments', task=task))
 
@@ -110,7 +118,7 @@ def pick_up():
     wav_list = read_order()
 
     locks = os.listdir(os.path.join(app.root_path,
-                                         app.config['MEDIA_ROOT'], 'cutdir/'))
+                                         app.config['MEDIA_ROOT']))
                                          ## TODO MODIFIED
     # remove first dot and .lock, to match names with wav
     locks = [fin[1:-5] for fin in locks if fin.endswith('lock')]
@@ -123,14 +131,15 @@ def pick_up():
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
 @app.route('/creating/<task>')
-def create_segments(task):
+def create_segments(task, max_trials=200, requested_answers=3):
     """
         Depending on the chosen task, create all the segments that will be
         examined by the user
     """
+    media_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'])
     # Before anything, check if there are files in audio/
     # if not, go to success page
-    if (task != "wholecut"):
+    if ("wholecut" not in task):
         if len(os.listdir(os.path.join(app.root_path, 'static', 'audio'))) == 0:
             return redirect(url_for('no_wavs'))
 
@@ -154,31 +163,46 @@ def create_segments(task):
                                          app.config['MEDIA_ROOT']))
 
     else:
-        # retrieve already cut wav files
-        wav_list = get_wav_list(media_path) #future temp
-        # wav_list = ['cutdir/'+w for w in wav_list]
-        # TODO
-        # retrieve csv file, create if does not exist
+        dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
+        summary_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/summary.txt')
+
         try:
             with open(dict_path,"rb") as reading_file:
-                info_dict = cPickle.load(reading_file)
-        except Exception:
-            info_dict = {}
-            all_files = os.listdir(media_path)
-            for f in all_files:
-                for mode in modes:
-                    # for mat in maturity:
-                    for mat in vocal_mat_lab_cut.keys():
-                        info_dict[(f, mode, mat)] = 0
-            with open(dict_path, "wb") as writing_file:
-                cPickle.dump(info_dict, writing_file)
-        # cut wav between 500/whole
-        # based on csv, randomly select [k] 500 chunks and/or [k] whole chunks (?)
-        # join to create wav_list
+                info_dict = cPickle.load(reading_file) #TODO pass instead of this?
+        except Exception: # if file does not exist, create it # what about other exception than file error?
+            create_info_txt(media_path, dict_path)
+        try:
+            with open(summary_path,"rb") as reading_file:
+                sum_dict = cPickle.load(reading_file) #TODO pass instead of this?
+        except Exception: # if file does not exist, create it
+            sum_dict = create_summary_txt(media_path, summary_path)
 
+        # if 500ms labeling
+        if ("_c" in task):
+        # retrieve already cut wav files
+            temp_wav_list = get_wav_list(media_path+'/cutdir/500/')
+            temp_wav_list = [w for w in temp_wav_list if w.endswith("_500.wav")] # to get only those which are 500ms long - never too cautious
+            wav_list = []
+            for w in temp_wav_list:
+                if sum_dict[w]<requested_answers : # if some data is missing (eg a wav having been heard fewer times)
+                    wav_list.append(w)
+            wav_list = random.sample(wav_list, min(max_trials, len(wav_list))) # sample either defined nb of wav or left wav
+            # result = random.sample(chi_utt, k)
+        elif ("_w1" in task):
+            wav_list = get_wav_list(media_path+'/cutdir/whole_unchecked/')
+        else:
+            temp = wav_list = get_wav_list(media_path+'/cutdir/whole_checked/')
+            for w in temp_wav_list:
+                if sum_dict[w]<requested_answers : # if some data is missing (eg a wav having been heard fewer times)
+                    wav_list.append(w)
+            wav_list = random.sample(wav_list, min(max_trials, len(wav_list))) # sample either defined nb of wav or left wav
+        # based on csv, randomly select [k] 500 chunks and/or [k] whole chunks (?)
+
+    if len(wav_list)==0:
+        return redirect(url_for('no_wav'))
+    
     seed = 50
     random.Random(seed).shuffle(wav_list)
-
     write_order(wav_list)
     first_wav = wav_list[0]
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
@@ -231,7 +255,7 @@ def treat_all_wavs(wav_name='test1.wav'):
         return redirect(url_for('error_page'))
 
     # get percentage of treated files for progress bar
-    progress = round(( (float(wav_index) + 1) / len(wav_list) ) * 100)
+    progress = round(( (float(wav_index)) / len(wav_list) ) * 100)
 
     # labels that can be put to the segment
     entries = task2choices[task]
@@ -291,7 +315,7 @@ def treat_all_wavs(wav_name='test1.wav'):
                 cor_spkr = correction[0]
             else:
                 cor_spkr = None
-            if (task!="wholecut"):
+            if ("wholecut" not in task):
                 rttm_name = "refined_" + original_wav + '.rttm'
                 rttm_in = os.path.join(app.root_path, 'static', 'audio', rttm_name)
 
@@ -300,26 +324,57 @@ def treat_all_wavs(wav_name='test1.wav'):
                 # lock file
                 lock_file(wav_name, cor_spkr)
             else:
-                print(correction)
+                # print(correction)
+                # open dict (no matter the task)
+                dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
                 with open(dict_path, 'rb') as reading_file:
                     info_dict = cPickle.load(reading_file)
-                info_dict[(wav_name, 'cut', choices2task["wholecut"][correction[0]])] += 1
+
+                if ("_c" in task):
+                    info_dict[(get_wav_index(wav_name), 'cut', choices2task["wholecut_c"][correction[0]])] += 1
+                elif ("_w2" in task):
+                    info_dict[(get_wav_index(wav_name), 'whole', choices2task["wholecut_w2"][correction[0]])] += 1
+                else :
+                    info_dict[(get_wav_index(wav_name), 'whole', 'is_child')] = correction[0]
+                    # if it is a child, move to check
+                    # if not, change name ?
+                    media_path = os.path.join(app.root_path,
+                                            app.config['MEDIA_ROOT'])
+                    media_path += "/cutdir/"
+                    old_path = media_path + "/whole_unchecked/" + wav_name
+                    if (correction[0]==1): # it is a child
+                        new_path = media_path + "/whole_checked/" + wav_name
+                    else :
+                        new_path = media_path + "/whole_unchecked/" + wav_name + ".not_CHN"
+                        pass # rename file (.wav.not_CHN ?)
+                    # move to right location
+                    cmd = ['mv', old_path, new_path]
+                    # call mv command
+                    subprocess.call(cmd)
+
+
+                # write changes in dict no matter the task
                 with open(dict_path, "wb") as writing_file:
                     cPickle.dump(info_dict, writing_file)
-                pass
 
             # check if current segment is the last, if so, redirect to success page
-            if next_wav:
+            if (next_wav):
                 return redirect(url_for('treat_all_wavs', wav_name=next_wav))
             else:
                 return redirect(url_for('success'))
         else:
             noChoice = True
     print(task)
-    if (task=='label' or task=='speaker'):
+    if ("wholecut" not in task):
         directory = 'media/'
-    else:
+    else :
         directory = 'media/cutdir/'
+        if ("_c" in task):
+            directory += '500/'
+        elif ("_w1" in task):
+            directory += 'whole_unchecked/'
+        else:
+            directory += 'whole_checked/'
     print(wav_name)
     return render_template('show_entries.html', entries=entries.keys(),
                            wav=wav_name, dir=directory, next_wav=next_wav, prev_wav=prev_wav,
