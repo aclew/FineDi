@@ -190,6 +190,7 @@ def create_segments(task, max_trials=200, requested_answers=3):
             # result = random.sample(chi_utt, k)
         elif ("_w1" in task):
             wav_list = get_wav_list(media_path+'/cutdir/whole_unchecked/')
+            wav_list = random.sample(wav_list, min(max_trials, len(wav_list)))
         else:
             temp = wav_list = get_wav_list(media_path+'/cutdir/whole_checked/')
             for w in temp_wav_list:
@@ -200,7 +201,7 @@ def create_segments(task, max_trials=200, requested_answers=3):
 
     if len(wav_list)==0:
         return redirect(url_for('no_wav'))
-    
+
     seed = 50
     random.Random(seed).shuffle(wav_list)
     write_order(wav_list)
@@ -263,8 +264,10 @@ def treat_all_wavs(wav_name='test1.wav'):
 
     # extract description from wav name
     if task == "speaker":
+        print(wav_name)
         (original_wav, wav_len,
          on_off, old_spkr, new_spkr, label) = get_infos_from_wavname_speaker(wav_name)
+
         display_spkr = labels[new_spkr]
         speaker = True
     elif task == "label":

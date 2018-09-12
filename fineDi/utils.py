@@ -82,11 +82,13 @@ def lock_file(wav_name, spkr_name=None):
 def get_label(wav_name, cur_on, cur_spkr):
     """ Get the current label for the wav file being treated"""
     rttm = os.path.join(app.root_path, 'static', 'audio','refined_' + wav_name + '.rttm')
+    print(rttm)
     with open(rttm, 'r') as fin:
         annot = fin.readlines()
+        print("annotating")
         for line in annot:
             _1, fname, _2, on, dur, _3, label, spkr, _4 = line.strip('\n').split('\t')
-
+            # print(fname, wav_name, float(on), float(cur_on), spkr, cur_spkr)
             if ( (fname == wav_name) and
                  (float(on) == float(cur_on)) and
                  (spkr == cur_spkr)):
@@ -166,10 +168,11 @@ def get_infos_from_wavname_speaker(wav_name):
         put in the name of the wav file.
         This function retrieves these infos
     """
-    original_wav = "_".join(wav_name.split('_')[0:-4])
-    wav_len = float(wav_name.split('_')[-3])
+    print(wav_name)
+    original_wav = "_".join(wav_name.split('_')[0:-3])
+    wav_len = float(wav_name.split('_')[-2])
     #label = wav_name.split('_')[-1].split('.')[0]
-    on_off = wav_name.split('_')[-4]
+    on_off = wav_name.split('_')[-3]
     old_spkr = wav_name.split('_')[-1].split('.')[0]
 
     # To get label, we should check if the file has already been seen.
@@ -187,7 +190,7 @@ def get_infos_from_wavname_speaker(wav_name):
 
     else:
         new_spkr = old_spkr
-
+    print(original_wav, on_off, new_spkr)
     label = get_label(original_wav, on_off, new_spkr)
     return original_wav, wav_len, on_off, old_spkr, new_spkr, label
 
