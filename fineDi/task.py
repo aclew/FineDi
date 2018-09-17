@@ -15,7 +15,7 @@ vocal_mat_lab = {'crying':"Y", 'laughing':"L", 'non-canonical babbling':"N",
                  'exclude':"X", "do not change annotation":"NCA"}
 vocal_mat_lab_cut = {'crying':"Y", 'laughing':"L", 'non-canonical babbling':"N",
                  'canonical babbling':"C", 'vegetative':'V', 'exclude':"X", 'undecided':"U"}
-vocal_mat_lab_is_child = {"keep (key child)" : 1, "exclude (not key child)" : 2}
+vocal_mat_lab_is_child = {"keep (key child)" : 1, "exclude (not key child)" : -1}
 
 lab2vocal_mat = {"Y":'crying', "L":'laughing',
                  "N":'non-canonical babbling',
@@ -31,7 +31,7 @@ lab2vocal_mat_cut = {"Y":'crying', "L":'laughing',
                  "X": 'exclude',
                  "U": 'undecided',
                  "<NA>": "<NA>"}
-lab2vocal_mat_is_child = {1 : "keep (key child)", 2 : "exclude (not key child)"}
+lab2vocal_mat_is_child = {1 : "keep (key child)", -1 : "exclude (not key child)"}
 task2col = {'speaker': 7, 'label': 6}
 
 task2choices = {'speaker': talker_lab,

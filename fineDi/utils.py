@@ -18,6 +18,7 @@ def split_segments_rttm(folder):
         and write it into folder, with 'refined' prepended to
         the rttm name"""
     all_files = os.listdir(folder)
+    # print(all_files)
     all_rttm = [rttm for rttm in all_files if (rttm.endswith('.rttm') and not rttm.startswith('refined'))]
     for rttm in all_rttm:
         with open(os.path.join(folder, rttm), 'r') as fin:
@@ -264,8 +265,9 @@ def create_segments_speaker():
     """
     # start by removing all the wavs in the media folder
     # first get all the wavs
-    wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
 
+    wav_list = get_wav_list(os.path.join(app.root_path, 'static', 'audio'))
+    print(wav_list)
     # for each wav, retrieve the labels
     for wav_name in wav_list[:]:
         wav_rttm_dict = read_rttm(wav_name)
@@ -360,12 +362,12 @@ def create_info_txt(media_path, dict_path):
 
 def create_summary_txt(media_path, summary_path):
     sum_dict = {}
-    files_500 = [f for f in os.listdir(media_path+'/cutdir/500/') if (f.endswith(".wav"))]
-    files_checked = [f for f in os.listdir(media_path+'/cutdir/whole_checked/') if (f.endswith(".wav"))]
+    files_500 = [f for f in os.listdir(media_path+'/cutdir/500/') if (f.endswith(".wav"))] ## TODO change path !!!!!
+    files_full = [f for f in os.listdir(media_path+'/cutdir/full/') if (f.endswith(".wav"))] # TODO change path + change to files_full
     for f in files_500:
-        sum_dict[f] = 0
-    for f in files_checked:
-        sum_dict[f] = 0
+        sum_dict[f] = 0 # if it is 500, only checking number of times it was seen
+    for f in files_full:
+        sum_dict[f] = [0,0] # if full, sun_dict[1] = -1 if not child, +1 if child, and if so, sum_dict[0] = nb of times seen
     with open(summary_path, "wb") as writing_file:
         cPickle.dump(sum_dict, writing_file)
     return sum_dict

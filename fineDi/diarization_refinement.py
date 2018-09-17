@@ -57,6 +57,10 @@ app.config.from_envvar('FLASK_CONFIG')
 # step=0
 # global max_steps
 # max_steps=10
+## TODO global summary and info // or not
+dict_path = os.path.join(app.root_path, 'static', 'info_dict.txt')
+summary_path = os.path.join(app.root_path, 'static', 'summary.txt')
+## TODO We need: global time (when is the page loaded vs when is the answer)
 
 # accessible urls
 @app.route('/')
@@ -161,10 +165,11 @@ def create_segments(task, max_trials=200, requested_answers=3):
     # shuffle media files
         wav_list = get_wav_list(os.path.join(app.root_path,
                                          app.config['MEDIA_ROOT']))
+        # print(wav_list)
 
     else:
-        dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
-        summary_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/summary.txt')
+        dict_path = os.path.join(app.root_path, 'static', 'info_dict.txt')
+        summary_path = os.path.join(app.root_path, 'static', 'summary.txt')
 
         try:
             with open(dict_path,"rb") as reading_file:
@@ -181,20 +186,22 @@ def create_segments(task, max_trials=200, requested_answers=3):
         if ("_c" in task):
         # retrieve already cut wav files
             temp_wav_list = get_wav_list(media_path+'/cutdir/500/')
-            temp_wav_list = [w for w in temp_wav_list if w.endswith("_500.wav")] # to get only those which are 500ms long - never too cautious
+            temp_wav_list = [w for w in temp_wav_list if w.endswith("_500.wav")] # TODO change if other length (compatibility) to get only those which are 500ms long - never too cautious
             wav_list = []
             for w in temp_wav_list:
                 if sum_dict[w]<requested_answers : # if some data is missing (eg a wav having been heard fewer times)
                     wav_list.append(w)
+                    # sum_dict[w] += 1 ## TODO or hould it be later, when actually writing in info, to prevent not completed sessions?
             wav_list = random.sample(wav_list, min(max_trials, len(wav_list))) # sample either defined nb of wav or left wav
             # result = random.sample(chi_utt, k)
         elif ("_w1" in task):
-            wav_list = get_wav_list(media_path+'/cutdir/whole_unchecked/')
+            wav_list = get_wav_list(media_path+'/cutdir/full/')
             wav_list = random.sample(wav_list, min(max_trials, len(wav_list)))
         else:
-            temp = wav_list = get_wav_list(media_path+'/cutdir/whole_checked/')
+            temp_wav_list = get_wav_list(media_path+'/cutdir/full/')
+            wav_list = []
             for w in temp_wav_list:
-                if sum_dict[w]<requested_answers : # if some data is missing (eg a wav having been heard fewer times)
+                if (sum_dict[w][1]==1 and sum_dict[w][0]<requested_answers) : # if some data is missing (eg a wav having been heard fewer times)
                     wav_list.append(w)
             wav_list = random.sample(wav_list, min(max_trials, len(wav_list))) # sample either defined nb of wav or left wav
         # based on csv, randomly select [k] 500 chunks and/or [k] whole chunks (?)
@@ -206,6 +213,8 @@ def create_segments(task, max_trials=200, requested_answers=3):
     random.Random(seed).shuffle(wav_list)
     write_order(wav_list)
     first_wav = wav_list[0]
+
+    ## TODO update time when rendering html
     return redirect(url_for('treat_all_wavs', wav_name=first_wav))
 
 
@@ -224,6 +233,9 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         TODO: add what kind of transcription you want to treat.
     """
+
+    ## TODO update time
+
     task = read_task()
 
     # if no wav is given as input, take the first one that's not locked
@@ -264,13 +276,14 @@ def treat_all_wavs(wav_name='test1.wav'):
 
     # extract description from wav name
     if task == "speaker":
-        print(wav_name)
+        # print(wav_name)
         (original_wav, wav_len,
          on_off, old_spkr, new_spkr, label) = get_infos_from_wavname_speaker(wav_name)
 
         display_spkr = labels[new_spkr]
         speaker = True
     elif task == "label":
+
         (original_wav, wav_len,
          on_off, label) = get_infos_from_wavname_label(wav_name)
         display_spkr = "key child"
@@ -329,36 +342,47 @@ def treat_all_wavs(wav_name='test1.wav'):
             else:
                 # print(correction)
                 # open dict (no matter the task)
-                dict_path = os.path.join(app.root_path, app.config['MEDIA_ROOT'], 'cutdir/info_dict.txt')
+                dict_path = os.path.join(app.root_path, 'static', 'info_dict.txt')
                 with open(dict_path, 'rb') as reading_file:
                     info_dict = cPickle.load(reading_file)
+                # open summary (if child, and nb of time it was seen)
+                sum_path = os.path.join(app.root_path, 'static', 'summary.txt')
+                with open(sum_path, 'rb') as reading_file:
+                    sum_dict = cPickle.load(reading_file)
 
                 if ("_c" in task):
                     info_dict[(get_wav_index(wav_name), 'cut', choices2task["wholecut_c"][correction[0]])] += 1
+                    sum_dict[wav_name] += 1
                 elif ("_w2" in task):
                     info_dict[(get_wav_index(wav_name), 'whole', choices2task["wholecut_w2"][correction[0]])] += 1
+                    sum_dict[wav_name][0] += 1
                 else :
                     info_dict[(get_wav_index(wav_name), 'whole', 'is_child')] = correction[0]
-                    # if it is a child, move to check
-                    # if not, change name ?
-                    media_path = os.path.join(app.root_path,
-                                            app.config['MEDIA_ROOT'])
-                    media_path += "/cutdir/"
-                    old_path = media_path + "/whole_unchecked/" + wav_name
-                    if (correction[0]==1): # it is a child
-                        new_path = media_path + "/whole_checked/" + wav_name
-                    else :
-                        new_path = media_path + "/whole_unchecked/" + wav_name + ".not_CHN"
-                        pass # rename file (.wav.not_CHN ?)
+                    sum_dict[wav_name][1] = correction[0]
+
+                    '''  CHANGING THIS BECAUSE NO MOVING ANYWHERE, DATASET STAYS THE SAME
+                    # # if it is a child, move to check
+                    # # if not, change name ?
+                    # media_path = os.path.join(app.root_path,
+                    #                         app.config['MEDIA_ROOT'])
+                    # media_path += "/cutdir/"
+                    # old_path = media_path + "/whole_unchecked/" + wav_name
+                    # if (correction[0]==1): # it is a child
+                    #     new_path = media_path + "/whole_checked/" + wav_name ## TODO
+                    # else :
+                    #     new_path = media_path + "/whole_unchecked/" + wav_name + ".not_CHN" ## TODO change sth in summary instead
                     # move to right location
                     cmd = ['mv', old_path, new_path]
                     # call mv command
                     subprocess.call(cmd)
+                    '''
 
 
                 # write changes in dict no matter the task
                 with open(dict_path, "wb") as writing_file:
                     cPickle.dump(info_dict, writing_file)
+                with open(sum_path, "wb") as writing_file:
+                    cPickle.dump(sum_dict, writing_file)
 
             # check if current segment is the last, if so, redirect to success page
             if (next_wav):
@@ -374,11 +398,13 @@ def treat_all_wavs(wav_name='test1.wav'):
         directory = 'media/cutdir/'
         if ("_c" in task):
             directory += '500/'
-        elif ("_w1" in task):
-            directory += 'whole_unchecked/'
+            # no more unchecked or checked
+        # elif ("_w1" in task):
+        #     directory += 'whole_unchecked/'
         else:
-            directory += 'whole_checked/'
+            directory += 'full/'
     print(wav_name)
+    ## TODO update time
     return render_template('show_entries.html', entries=entries.keys(),
                            wav=wav_name, dir=directory, next_wav=next_wav, prev_wav=prev_wav,
                            progress=progress, descriptors=descriptors,
