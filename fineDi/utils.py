@@ -147,7 +147,7 @@ def modify_rttm(rttm_in, descriptors, correction):
     move(abs_path, rttm_in)
 
 
-def get_infos_from_wavname_label(wav_name, rttm=True):
+def get_infos_from_wavname_label(wav_name, rttm=True): # remove rttm
     """
         when the segments are created, some key infos are
         put in the name of the wav file.
@@ -162,6 +162,14 @@ def get_infos_from_wavname_label(wav_name, rttm=True):
         label = get_label(original_wav, on_off, 'CHI')
     return original_wav, wav_len, on_off, label
 
+
+def get_infos_from_wavname_comparison(wav_name):
+    original_wav = wav_name
+    onset = wav_name.split('_')[-2]
+    offset = wav_name.split('_')[-1].strip('.wav')
+    wav_len = str(float(offset)-float(onset))
+    label = "None"
+    return original_wav, wav_len, onset, label
 
 def get_infos_from_wavname_speaker(wav_name):
     """
@@ -353,6 +361,7 @@ def create_info_txt(media_path, dict_path):
     all_files = [f for f in os.listdir(media_path) if f.endswith(".wav")]
     for f in all_files:
         for mode in modes:
+            info_dict[(get_wav_index(f), mode, 'time')]=0
             for mat in vocal_mat_lab_cut.keys():
                 info_dict[(get_wav_index(f), mode, mat)] = 0
         info_dict[(get_wav_index(f), 'whole', 'is_child')] = 0

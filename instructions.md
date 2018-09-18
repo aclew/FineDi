@@ -6,15 +6,15 @@
 
 - Clone the repository
 
-`git clone git@github.com:aclew/FineDi.git ~/Desktop/`
+  `git clone git@github.com:aclew/FineDi.git ~/Desktop/`
 
 - Check that you are on the right branch
 
-`git branch -a`
+  `git branch -a`
 
   - If the output does not have `whole_vs_500` in green, do
 
-  `git checkout whole_vs_500`
+    `git checkout whole_vs_500`
 
 
 ### 2. Put dataset at the right place
@@ -23,7 +23,7 @@
 
   - Check that the files _info_dict.txt_ and _summary.txt_ exist (if not, that's bad)
 
-  - In _FineDi -> fineDi -> static_, create a folder named _media_ 
+  - In _FineDi -> fineDi -> static_, create a folder named _media_
 
   - Copy the folder _Seedlings -> classif_comparison -> cut_dir_ in _media_
 
@@ -31,7 +31,7 @@
 
 - Get the latest modifications to the files _info_dict.txt_ and _summary.txt_
 
-`git pull`
+  `git pull`
 
 ## Running the app
 
@@ -43,13 +43,13 @@
 
 - Check that you are at the right place by writing the following command in the terminal:
 
-`ls`
+  `ls`
 
 You should then see the name `launch_app.sh` appear in the list
 
 - Launch the app from the Terminal
 
-`sh launch_app.sh`
+  `sh launch_app.sh`
 
 - Open the corresponding address in Firefox
 
@@ -89,13 +89,13 @@ You should then see the name `launch_app.sh` appear in the list
 
   - In the terminal, write the commands:
 
-  `git add findeDi/static/summary.txt`
+    `git add findeDi/static/summary.txt`
 
-  `git add findeDi/static/info_dict.txt`
+    `git add findeDi/static/info_dict.txt`
 
-  `git commit -m "processed [n] files for task [i]"` (with n the number of files that you listened to and i the name of the task)
+    `git commit -m "processed [n] files for task [i]"` (with n the number of files that you listened to and i the name of the task)
 
-  `git push`
+    `git push`
 
 
 You did your part, thank you!
