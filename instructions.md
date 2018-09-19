@@ -4,7 +4,7 @@
 
 ### 1. Set git
 
-- Clone the repository
+- Open Terminal and clone the repository
 
   `git clone git@github.com:aclew/FineDi.git ~/Desktop/`
 
