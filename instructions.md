@@ -6,7 +6,11 @@
 
 - Open Terminal and clone the repository
 
-  `git clone git@github.com:aclew/FineDi.git ~/Desktop/`
+  `git clone git@github.com:aclew/FineDi.git ~/Desktop/FineDi`
+
+- Go into this directory
+
+  `cd ~/Desktop/FineDi/`
 
 - Check that you are on the right branch
 
