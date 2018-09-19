@@ -210,6 +210,11 @@ def treat_all_wavs(wav_name='test1.wav'):
     if task == "speaker":
         (original_wav, wav_len,
          on_off, old_spkr, new_spkr, label) = get_infos_from_wavname_speaker(wav_name)
+
+        # Remove number from name (FA1 => FA)
+        if not new_spkr == "CHI" :
+            new_spkr = new_spkr.strip('0123456789')
+
         display_spkr = labels[new_spkr]
         speaker = True
     else:
@@ -247,7 +252,6 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         if len(correction) > 0:
             # get new speaker name, to put in lock
-            print entries
             correction = [entries[spkr.lower()] for spkr in correction]
 
             if task == "speaker":

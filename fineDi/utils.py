@@ -85,11 +85,12 @@ def get_label(wav_name, cur_on, cur_spkr):
         for line in annot:
             _1, fname, _2, on, dur, _3, label, spkr, _4 = line.strip('\n').split('\t')
 
-            if ( (fname == wav_name) and
+            if ((fname == wav_name) and
                  (float(on) == float(cur_on)) and
                  (spkr == cur_spkr)):
                 split_label = label.split(',')
                 out_label = ','.join([lab2vocal_mat[lab] for lab in split_label])
+
     return out_label
 
 
@@ -119,7 +120,7 @@ def modify_rttm(rttm_in, descriptors, correction):
                  in_col[6], in_col[7], in_col[8]) = line.strip('\n').split('\t')
                 if  ((in_col[1] == descriptors[0]) and
                      (float(in_col[3]) == float(descriptors[4])) and
-                     (in_col[7] == speakers[descriptors[2]])):
+                     (in_col[7].strip('0123456789') == speakers[descriptors[2]])):
                     # write correction in correct column
                     for key in in_col:
                         if key == col_to_change:
@@ -219,7 +220,7 @@ def read_rttm(wav_name):
     with open(os.path.join(app.root_path, 'static', 'audio', rttm), 'r') as fin:
         annot = fin.readlines()
         for line in annot:
-            _, fname, _, on, dur, _, _, spkr, label = line.strip('\n').split('\t')
+            _, fname, _, on, dur, _, label, spkr, _ = line.strip('\n').split('\t')
             trs[spkr].append((float(on), float(dur),
                               label))
     return trs
@@ -270,6 +271,9 @@ def create_segments_speaker():
                 # skip empty segments
                 if dur <= 0:
                     continue
+
+                # if label is <NA>, just write NA
+                lab = lab.strip('<>')
 
                 # define output wav path
                 output_wav = wav_name.split('.')[0] + '_{}_{}_{}_{}.wav'.format(on, dur,
