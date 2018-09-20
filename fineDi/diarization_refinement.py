@@ -190,7 +190,8 @@ def create_segments(task):
             with open(dict_path,"rb") as reading_file:
                 info_dict = cPickle.load(reading_file) #TODO pass instead of this?
         except Exception: # if file does not exist, create it # what about other exception than file error?
-            info_dict = create_info_txt(media_path+"/cutdir/"+str(cut_length)+"/", dict_path)
+            print("NO DICO")
+            info_dict = create_info_txt(media_path+"/cutdir/full/", dict_path)
             print("dict")
             print(info_dict)
         try:
@@ -214,13 +215,17 @@ def create_segments(task):
             wav_list = random.sample(wav_list, min(max_trials, len(wav_list))) # sample either defined nb of wav or left wav
             # result = random.sample(chi_utt, k)
         elif ("_w1" in task):
-            wav_list = get_wav_list(media_path+'/cutdir/full/')
+            temp_wav_list = get_wav_list(media_path+'/cutdir/full/')
+            wav_list = []
+            for w in temp_wav_list:
+                if sum_dict[w][1]<25: #at each iteration, add 10 + answer (-1 if not child, +1 if child); <25 => one child opinion missing
+                    wav_list.append(w)
             wav_list = random.sample(wav_list, min(max_trials, len(wav_list)))
         else:
             temp_wav_list = get_wav_list(media_path+'/cutdir/full/')
             wav_list = []
             for w in temp_wav_list:
-                if (sum_dict[w][1]>0 and sum_dict[w][0]<requested_answers) : # if some data is missing (eg a wav having been heard fewer times)
+                if (sum_dict[w][1]==33 and sum_dict[w][0]<requested_answers) : # 33 = 3 favorable opinions; if some data is missing (eg a wav having been heard fewer times)
                     wav_list.append(w)
             wav_list = random.sample(wav_list, min(max_trials, len(wav_list))) # sample either defined nb of wav or left wav
         # based on csv, randomly select [k] 500 chunks and/or [k] whole chunks (?)
@@ -351,7 +356,7 @@ def treat_all_wavs(wav_name='test1.wav'):
 
         if len(correction) > 0:
             # get new speaker name, to put in lock
-            print entries
+            print(entries)
             correction = [entries[spkr.lower()] for spkr in correction]
 
             if task == "speaker":
@@ -387,14 +392,15 @@ def treat_all_wavs(wav_name='test1.wav'):
                     else:
                         info_dict[(get_wav_index(wav_name), 'cut', 'time')] = info_dict[(get_wav_index(wav_name), 'cut', 'time')] + choice_duration
                     sum_dict[wav_name] += 1
-                    print(info_dict)
+                    # print(info_dict)
                 elif ("_w2" in task):
                     info_dict[(get_wav_index(wav_name), 'whole', choices2task["wholecut_w2"][correction[0]])] += 1
                     info_dict[(get_wav_index(wav_name), 'whole', 'time')] += choice_duration
                     sum_dict[wav_name][0] += 1
                 else :
-                    info_dict[(get_wav_index(wav_name), 'whole', 'is_child')] += correction[0]
+                    info_dict[(get_wav_index(wav_name), 'whole', 'is_child')] += 10+int(correction[0])
                     sum_dict[wav_name][1] = correction[0]
+                    print((get_wav_index(wav_name), 'whole', 'is_child'), info_dict[(get_wav_index(wav_name), 'whole', 'is_child')])
 
                 # write changes in dict no matter the task
                 with open(dict_path, "wb") as writing_file:
