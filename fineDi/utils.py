@@ -352,8 +352,8 @@ def create_segments_label():
     return first_wav
 
 def get_wav_index(wav_name):
-    # considering the name of the file is sth like child_age_onset_offset
-    res = '_'.join(wav_name.split('.')[0].split('_')[0:4])
+    # considering the name of the file is sth like child_age_onset.on_offset.off.wav
+    res = '_'.join(wav_name.strip('.wav').split('_')[0:4])
     return res
 
 def create_info_txt(media_path, dict_path):
