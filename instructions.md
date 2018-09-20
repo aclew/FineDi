@@ -41,7 +41,7 @@
 
   `git pull`
 
-  - If there is a merging issue... should not happen
+  - If there is a merging issue... should not happen...but go bug Gladys if it does:)
   
 ## Running the app
 
