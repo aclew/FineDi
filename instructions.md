@@ -31,7 +31,7 @@
 
   - In _FineDi -> fineDi -> static_, create a folder named _media_
 
-  - Copy the folder _Seedlings -> classif_comparison -> cut_dir_ in _media_ (it may take up to 5 minutes)
+  - Copy the folder(from PN-Opus) _Seedlings -> classif_comparison -> cut_dir_ in _media_ (it may take up to 5 minutes)
 
 ## Retrieving changes (if not first time)
 
