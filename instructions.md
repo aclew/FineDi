@@ -4,35 +4,45 @@
 
 ### 1. Set git
 
-- Clone the repository
+- Open Terminal and clone the repository
 
-  `git clone git@github.com:aclew/FineDi.git ~/Desktop/`
+  `git clone git@github.com:aclew/FineDi.git ~/Desktop/FineDi`
+
+- Go into this directory
+
+  `cd ~/Desktop/FineDi/`
 
 - Check that you are on the right branch
 
   `git branch -a`
 
-  - If the output does not have `whole_vs_500` in green, do
+  - If the output has `master` in green (or anything other than `whole_vs_500` in green), change branch using
 
     `git checkout whole_vs_500`
+    
+  - Repeat instruction `git branch -a` to check that `* whole_vs_500` is now in green in the top row
 
 
 ### 2. Put dataset at the right place
 
 - Go to _FineDi -> fineDi -> static_
 
-  - Check that the files _info_dict.txt_ and _summary.txt_ exist (if not, that's bad)
+  - Check that the files _info_dict.txt_ and _summary.txt_ exist (if not, don't go any further)
 
   - In _FineDi -> fineDi -> static_, create a folder named _media_
 
-  - Copy the folder _Seedlings -> classif_comparison -> cut_dir_ in _media_
+  - Copy the folder(from PN-Opus) _Seedlings -> classif_comparison -> cut_dir_ in _media_ (it may take up to 5 minutes)
 
 ## Retrieving changes (if not first time)
 
-- Get the latest modifications to the files _info_dict.txt_ and _summary.txt_
+- Open Terminal and get the latest modifications to the files _info_dict.txt_ and _summary.txt_
+
+  `cd ~/Desktop/Finedi`
 
   `git pull`
 
+  - If there is a merging issue... should not happen...but go bug Gladys if it does:)
+  
 ## Running the app
 
 ### 1. Launching the app
@@ -83,7 +93,7 @@ You should then see the name `launch_app.sh` appear in the list
 
   - Quit Firefox
 
-  - In the terminal, press ctrl+C to quit the app
+  - In the terminal, press _ctrl+C_ to quit the app
 
 - Save your progress on the git repository:
 
