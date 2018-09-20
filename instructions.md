@@ -20,7 +20,7 @@
 
     `git checkout whole_vs_500`
     
-  - Repeat instruction `git branch -a` to check that `whole_vs_500` is now in green
+  - Repeat instruction `git branch -a` to check that `* whole_vs_500` is now in green in the top row
 
 
 ### 2. Put dataset at the right place
