@@ -44,6 +44,8 @@ choices2task = {'speaker': lab2talker,
                 'wholecut_c': lab2vocal_mat_cut,
                 'wholecut_w1': lab2vocal_mat_is_child,
                 'wholecut_w2': lab2vocal_mat_cut}
-
+instructions = {'wholecut_c': "Listen to the audio clip by clicking on the play button. Choose the label that fits best what you hear (please only choose one option). When your choice is made, click on 'Submit Query' to go to the next file.",
+'wholecut_w1': "Listen to the audio clip by clicking on the play button. If what you hear is definitely the child being recorded and no one else, then check the box for 'Keep', otherwise, check the box for 'Exclude'. \n \n Select only one option, and when your choice is made, click on 'Submit Query' to go to the next file.",
+'wholecut_w2': "Listen to the audio clip by clicking on the play button. Choose the label that fits best what you hear (please only choose one option). When your choice is made, click on 'Submit Query' to go to the next file."}
 # maturity = ['crying', 'laughing', 'canonical', 'non-canonical', 'exclude', 'undecided']
 modes = ['cut', 'whole']

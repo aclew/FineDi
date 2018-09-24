@@ -371,8 +371,8 @@ def create_info_txt(media_path, dict_path):
 
 def create_summary_txt(media_path, summary_path):
     sum_dict = {}
-    files_500 = [f for f in os.listdir(media_path+'/cutdir/500/') if (f.endswith(".wav"))] ## TODO change path !!!!!
-    files_full = [f for f in os.listdir(media_path+'/cutdir/full/') if (f.endswith(".wav"))] # TODO change path + change to files_full
+    files_500 = [f for f in os.listdir(media_path+'/cutdir/500/') if (f.endswith(".wav"))]
+    files_full = [f for f in os.listdir(media_path+'/cutdir/full/') if (f.endswith(".wav"))] 
     for f in files_500:
         sum_dict[f] = 0 # if it is 500, only checking number of times it was seen
     for f in files_full:
